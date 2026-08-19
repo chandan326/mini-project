@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block title %}About Platform | AgriHealth AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="max-width-800 mx-auto">
+    <div class="text-center mb-5">
+      <h2 class="fw-bold text-success display-6">About AgriHealth AI</h2>
+      <p class="text-muted lead">Designing accessible, reliable, and scalable agricultural technology for farmers.</p>
+    </div>
+
+    <div class="agri-card p-4 p-md-5 mb-4 shadow-sm">
+      <h4 class="fw-bold text-success mb-3">Our Core Mission</h4>
+      <p class="text-dark">
+        Agricultural disease outbreaks cause significant crop yield loss annually. AgriHealth AI bridges the gap between field observation and verified agricultural science by providing a simple, mobile-friendly platform where farmers can upload plant photos, report symptoms, and receive AI-assisted disease assessments with practical management guidance.
+      </p>
+
+      <hr class="my-4">
+
+      <h4 class="fw-bold text-success mb-3">Key Design Principles</h4>
+      <ul class="list-group list-group-flush mb-4">
+        <li class="list-group-item"><i class="fas fa-check text-success me-2"></i> <strong>Farmer-First Usability:</strong> Large touch targets, minimal typing, and clear visuals.</li>
+        <li class="list-group-item"><i class="fas fa-check text-success me-2"></i> <strong>Ensemble Reliability:</strong> Multi-image analysis avoids false positives from single obscured leaf photos.</li>
+        <li class="list-group-item"><i class="fas fa-check text-success me-2"></i> <strong>Verified Knowledge Base:</strong> Explanations and care instructions sourced from verified agricultural reference material.</li>
+        <li class="list-group-item"><i class="fas fa-check text-success me-2"></i> <strong>Safety & Transparency:</strong> Low confidence flags ensure uncertain predictions are never presented as guaranteed.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

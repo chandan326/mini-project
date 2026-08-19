@@ -1,0 +1,252 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block title %}Plant Health Diagnosis Wizard | AgriHealth AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="max-width-900 mx-auto">
+    
+    <!-- Wizard Header -->
+    <div class="text-center mb-4">
+      <h2 class="fw-bold text-success">Plant Health Assessment</h2>
+      <p class="text-muted">Follow 4 easy steps to analyze plant photos and receive AI-assisted guidance.</p>
+    </div>
+
+    <!-- Step Progress Indicator -->
+    <div class="wizard-step-bar">
+      <div class="step-item active" id="step-ind-1">
+        1
+        <span class="step-label">Crop</span>
+      </div>
+      <div class="step-item" id="step-ind-2">
+        2
+        <span class="step-label">Photos</span>
+      </div>
+      <div class="step-item" id="step-ind-3">
+        3
+        <span class="step-label">Questions</span>
+      </div>
+      <div class="step-item" id="step-ind-4">
+        4
+        <span class="step-label">Analysis</span>
+      </div>
+    </div>
+
+    <!-- Main Wizard Card -->
+    <div class="agri-card p-4 p-md-5 mb-4 shadow-md">
+      <form id="diagnosisWizardForm" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="crop_id" id="selected_crop_id" value="">
+
+        <!-- ==================== STEP 1: SELECT CROP ==================== -->
+        <div id="step-1-crop" class="wizard-step-pane">
+          <h4 class="fw-bold text-success mb-2">Step 1: Select Your Crop</h4>
+          <p class="text-muted mb-4">What crop or plant are you checking for disease symptoms?</p>
+
+          <!-- Search Filter -->
+          <div class="mb-4">
+            <div class="input-group">
+              <span class="input-group-text bg-white text-muted"><i class="fas fa-search"></i></span>
+              <input type="text" id="cropSearchInput" class="form-control" placeholder="Search crop e.g. Tomato, Rice, Wheat...">
+            </div>
+          </div>
+
+          <div class="row g-3">
+            {% for crop in crops %}
+              <div class="col-lg-3 col-md-4 col-6">
+                <div class="crop-card crop-select-card" data-crop-id="{{ crop.id }}" data-crop-name="{{ crop.name }}">
+                  <div class="crop-icon"><i class="fas {{ crop.icon_class|default:'fa-seedling' }}"></i></div>
+                  <h6 class="fw-bold text-dark mb-1">{{ crop.name }}</h6>
+                  {% if crop.name_hi %}<small class="text-muted d-block">({{ crop.name_hi }})</small>{% endif %}
+                </div>
+              </div>
+            {% empty %}
+              <div class="col-12 text-center py-4">
+                <p class="text-muted">No active crops registered. Please seed default crops in admin.</p>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- ==================== STEP 2: 5 IMAGE UPLOADS ==================== -->
+        <div id="step-2-photos" class="wizard-step-pane" style="display: none;">
+          <h4 class="fw-bold text-success mb-2">Step 2: Upload Plant Photos</h4>
+          <p class="text-muted mb-3">Upload up to 5 clear photos of the affected plant for multi-angle ensemble analysis.</p>
+
+          <div class="alert alert-success d-flex align-items-center gap-2 mb-4" role="alert">
+            <i class="fas fa-lightbulb fa-lg"></i>
+            <small>
+              <strong>Photo Guidance:</strong> Take clear photos in good lighting. Include close-up of affected leaf, full leaf, stem, fruit/flower, or whole plant.
+            </small>
+          </div>
+
+          <div class="row g-3">
+            {% for i in "12345" %}
+              <div class="col-md-4 col-sm-6">
+                <div class="upload-slot-card" id="slot-card-{{ i }}">
+                  <input type="file" name="image_{{ i }}" id="image_{{ i }}" accept="image/*" capture="environment" style="display: none;">
+                  <div id="slot-preview-{{ i }}" onclick="document.getElementById('image_{{ i }}').click()" style="cursor: pointer;">
+                    <i class="fas fa-camera fa-2x text-success mb-2"></i>
+                    <span class="fw-bold d-block">Photo {{ i }} {% if i == "1" %}<span class="text-danger">* Required</span>{% else %}<span class="text-muted">(Optional)</span>{% endif %}</span>
+                    <small class="text-muted d-block">Tap to capture / upload</small>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- ==================== STEP 3: FARMER QUESTIONNAIRE ==================== -->
+        <div id="step-3-questions" class="wizard-step-pane" style="display: none;">
+          <h4 class="fw-bold text-success mb-2">Step 3: Answer Simple Questions</h4>
+          <p class="text-muted mb-4">Helping us understand onset, symptoms, and field conditions improves diagnosis accuracy.</p>
+
+          <div class="row g-4">
+            <!-- Question 1: Onset -->
+            <div class="col-md-6">
+              <label class="fw-bold form-label">1. When did you first notice the problem?</label>
+              <select name="first_noticed" class="form-select">
+                <option value="Today">Today</option>
+                <option value="2-3 days ago" selected>2–3 days ago</option>
+                <option value="About a week ago">About a week ago</option>
+                <option value="More than a week ago">More than a week ago</option>
+              </select>
+            </div>
+
+            <!-- Question 2: Weather -->
+            <div class="col-md-6">
+              <label class="fw-bold form-label">2. What is the current weather condition?</label>
+              <select name="weather_condition" class="form-select">
+                <option value="Humid" selected>Humid / Moist</option>
+                <option value="Rainy">Rainy</option>
+                <option value="Dry">Dry / Sunny</option>
+                <option value="Very hot">Very hot</option>
+                <option value="Cold">Cold</option>
+              </select>
+            </div>
+
+            <!-- Question 3: Affected Parts -->
+            <div class="col-12">
+              <label class="fw-bold form-label mb-2">3. Which part of the plant is affected? (Select all that apply)</label>
+              <div class="d-flex flex-wrap gap-3">
+                <div class="form-check form-check-inline bg-light px-3 py-2 rounded-pill border">
+                  <input class="form-check-input" type="checkbox" name="affected_parts" value="Leaves" id="part-leaves" checked>
+                  <label class="form-check-input-label fw-bold" for="part-leaves">Leaves</label>
+                </div>
+                <div class="form-check form-check-inline bg-light px-3 py-2 rounded-pill border">
+                  <input class="form-check-input" type="checkbox" name="affected_parts" value="Stem" id="part-stem">
+                  <label class="form-check-input-label fw-bold" for="part-stem">Stem</label>
+                </div>
+                <div class="form-check form-check-inline bg-light px-3 py-2 rounded-pill border">
+                  <input class="form-check-input" type="checkbox" name="affected_parts" value="Fruit" id="part-fruit">
+                  <label class="form-check-input-label fw-bold" for="part-fruit">Fruit / Flower</label>
+                </div>
+                <div class="form-check form-check-inline bg-light px-3 py-2 rounded-pill border">
+                  <input class="form-check-input" type="checkbox" name="affected_parts" value="Roots" id="part-roots">
+                  <label class="form-check-input-label fw-bold" for="part-roots">Roots</label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Question 4: Visible Symptoms -->
+            <div class="col-12">
+              <label class="fw-bold form-label mb-2">4. What symptom is most visible? (Select all that apply)</label>
+              <div class="d-flex flex-wrap gap-2">
+                {% for symptom in symptoms %}
+                  <div class="form-check bg-light px-3 py-2 rounded-pill border">
+                    <input class="form-check-input" type="checkbox" name="visible_symptoms" value="{{ symptom.name }}" id="sym-{{ symptom.id }}">
+                    <label class="form-check-label fw-bold" for="sym-{{ symptom.id }}">
+                      <i class="fas {{ symptom.icon }} text-success me-1"></i> {{ symptom.name }}
+                    </label>
+                  </div>
+                {% empty %}
+                  <div class="form-check bg-light px-3 py-2 rounded-pill border">
+                    <input class="form-check-input" type="checkbox" name="visible_symptoms" value="Yellowing" id="sym-def-1" checked>
+                    <label class="form-check-label fw-bold" for="sym-def-1">Yellowing</label>
+                  </div>
+                  <div class="form-check bg-light px-3 py-2 rounded-pill border">
+                    <input class="form-check-input" type="checkbox" name="visible_symptoms" value="Brown spots" id="sym-def-2" checked>
+                    <label class="form-check-label fw-bold" for="sym-def-2">Brown spots</label>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Question 5: Spreading -->
+            <div class="col-md-6">
+              <label class="fw-bold form-label">5. Is the problem spreading to nearby plants?</label>
+              <div class="d-flex gap-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="is_spreading" value="Yes" id="spread-yes" checked>
+                  <label class="form-check-label" for="spread-yes">Yes</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="is_spreading" value="No" id="spread-no">
+                  <label class="form-check-label" for="spread-no">No</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="is_spreading" value="Not sure" id="spread-unsure">
+                  <label class="form-check-label" for="spread-unsure">Not sure</label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Question 6: Treatment Applied -->
+            <div class="col-md-6">
+              <label class="fw-bold form-label">6. Has any treatment already been applied?</label>
+              <div class="d-flex gap-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="treatment_applied" value="Yes" id="treat-yes">
+                  <label class="form-check-label" for="treat-yes">Yes</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="treatment_applied" value="No" id="treat-no" checked>
+                  <label class="form-check-label" for="treat-no">No</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== STEP 4: LOADING / ANALYSIS ANIMATION ==================== -->
+        <div id="step-4-loading" class="wizard-step-pane" style="display: none;">
+          <div class="loading-box py-5">
+            <div class="spinner-agri"></div>
+            <h3 class="fw-bold text-success mb-2" id="loadingStatusText">Analyzing your plant...</h3>
+            <p class="text-muted lead mb-4" id="loadingSubText">Processing 5-image ensemble and correlating symptoms...</p>
+
+            <div class="progress progress-agri max-width-500 mx-auto mb-3">
+              <div class="progress-bar progress-bar-agri progress-bar-striped progress-bar-animated" style="width: 100%;"></div>
+            </div>
+            <small class="text-muted"><i class="fas fa-shield-alt text-success me-1"></i> Running verified Knowledge Base verification...</small>
+          </div>
+        </div>
+
+        <!-- Wizard Action Buttons -->
+        <div class="d-flex justify-content-between align-items-center mt-5 pt-3 border-top">
+          <button type="button" class="btn btn-outline-secondary rounded-pill px-4" id="btn-prev" style="display: none;">
+            <i class="fas fa-arrow-left me-1"></i> Previous
+          </button>
+          
+          <div class="ms-auto">
+            <button type="button" class="btn btn-agri-primary px-5 py-2 fs-5" id="btn-next">
+              Continue <i class="fas fa-arrow-right ms-1"></i>
+            </button>
+
+            <button type="submit" class="btn btn-agri-primary px-5 py-2 fs-5" id="btn-submit" style="display: none;">
+              <i class="fas fa-microchip me-2"></i> Analyze Plant Now
+            </button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/wizard.js' %}"></script>
+{% endblock %}

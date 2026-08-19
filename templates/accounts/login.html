@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block title %}Sign In | AgriHealth AI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="max-width-500 mx-auto">
+    <div class="agri-card p-4 p-md-5 shadow-md">
+      <div class="text-center mb-4">
+        <i class="fas fa-user-circle fa-3x text-success mb-2"></i>
+        <h3 class="fw-bold text-dark">Farmer Sign In</h3>
+        <p class="text-muted small">Sign in to save and access your past plant assessment reports.</p>
+      </div>
+
+      <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label class="form-label fw-bold">Username</label>
+          <input type="text" name="username" class="form-control" placeholder="Enter username" required>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label fw-bold">Password</label>
+          <input type="password" name="password" class="form-control" placeholder="Enter password" required>
+        </div>
+
+        <button type="submit" class="btn btn-agri-primary w-100 py-2 fs-5 mb-3">
+          Sign In
+        </button>
+      </form>
+
+      <hr class="my-4">
+
+      <div class="text-center small text-muted">
+        Don't have an account? <a href="{% url 'register' %}" class="fw-bold text-success">Register Here</a>
+        <div class="mt-2">
+          <a href="{% url 'wizard' %}" class="text-muted">Or continue diagnosis as Guest &rarr;</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

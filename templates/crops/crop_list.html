@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block title %}Supported Crops Database | AgriHealth AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="text-center max-width-700 mx-auto mb-5">
+    <h2 class="fw-bold text-success display-6">Supported Crop Database</h2>
+    <p class="text-muted lead">Explore all agricultural crops supported by our AI disease detection model.</p>
+  </div>
+
+  <div class="row g-4">
+    {% for crop in crops %}
+      <div class="col-lg-3 col-md-4 col-sm-6">
+        <div class="agri-card text-center h-100">
+          <i class="fas {{ crop.icon_class|default:'fa-seedling' }} fa-4x text-success mb-3"></i>
+          <h4 class="fw-bold text-dark mb-1">{{ crop.name }}</h4>
+          {% if crop.name_hi %}<span class="text-muted d-block mb-2">({{ crop.name_hi }})</span>{% endif %}
+          
+          <p class="small text-muted mb-3">{{ crop.description|truncatewords:15|default:"Trained AI model for leaf and stem symptom classification." }}</p>
+
+          <div class="d-flex flex-column gap-2 mt-auto">
+            <a href="{% url 'wizard' %}?crop={{ crop.id }}" class="btn btn-agri-primary btn-sm w-100">
+              <i class="fas fa-stethoscope me-1"></i> Check {{ crop.name }}
+            </a>
+            <a href="{% url 'crop_detail' slug=crop.slug %}" class="btn btn-agri-outline btn-sm w-100">
+              View Diseases ({{ crop.diseases.count }})
+            </a>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12 text-center py-5">
+        <p class="text-muted">No crop models registered in the database yet.</p>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

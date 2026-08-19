@@ -1,0 +1,21 @@
+# Python / Django gitignore
+*.pyc
+*__pycache__*
+.venv/
+venv/
+ENV/
+env/
+
+# Database & local secrets
+db.sqlite3
+db.sqlite3-journal
+.env
+
+# Media uploads & static files
+media/
+staticfiles/
+.DS_Store
+
+# IDE / Editor files
+.vscode/
+.idea/

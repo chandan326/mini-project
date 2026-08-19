@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block title %}How It Works | AgriHealth AI Platform{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="max-width-900 mx-auto">
+    <div class="text-center mb-5">
+      <h2 class="fw-bold text-success display-6">How AgriHealth AI Works</h2>
+      <p class="text-muted lead">Understanding our 5-image ensemble pipeline & verified agricultural knowledge base matching.</p>
+    </div>
+
+    <div class="row g-4 mb-5">
+      <div class="col-md-6">
+        <div class="agri-card p-4 h-100">
+          <div class="badge bg-success-subtle text-success fs-5 p-3 rounded-circle mb-3">1</div>
+          <h4 class="fw-bold text-dark">5-Photo Multi-Angle Upload</h4>
+          <p class="text-muted small">
+            Single leaf photos can often obscure early disease progression. Farmers upload up to 5 photos capturing affected leaf surfaces, stem junctions, or whole plant structures.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="agri-card p-4 h-100">
+          <div class="badge bg-success-subtle text-success fs-5 p-3 rounded-circle mb-3">2</div>
+          <h4 class="fw-bold text-dark">Image Preprocessing & Blur Detection</h4>
+          <p class="text-muted small">
+            Each uploaded image is validated for resolution, contrast, and sharpness. Blurry or overexposed images trigger warning notices to encourage clearer capture.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="agri-card p-4 h-100">
+          <div class="badge bg-success-subtle text-success fs-5 p-3 rounded-circle mb-3">3</div>
+          <h4 class="fw-bold text-dark">ML Ensemble Prediction</h4>
+          <p class="text-muted small">
+            Visual pattern features from valid photos are evaluated against disease classification models. Probabilities across images are aggregated for consistency.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="agri-card p-4 h-100">
+          <div class="badge bg-success-subtle text-success fs-5 p-3 rounded-circle mb-3">4</div>
+          <h4 class="fw-bold text-dark">Questionnaire Correlation</h4>
+          <p class="text-muted small">
+            Farmer inputs regarding weather (humidity, rain), symptom onset, and spreading status are correlated with visual ML predictions to compute final confidence.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-4 p-md-5 bg-white rounded-4 border shadow-sm text-center">
+      <h3 class="fw-bold text-success mb-3">Ready to test your crop?</h3>
+      <a href="{% url 'wizard' %}" class="btn btn-agri-primary btn-lg px-5 py-3 rounded-pill">
+        <i class="fas fa-stethoscope me-2"></i> Start Diagnosis Now
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

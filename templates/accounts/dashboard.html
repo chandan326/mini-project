@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block title %}Farmer Dashboard | AgriHealth AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+      <h2 class="fw-bold text-success mb-1">Farmer Dashboard</h2>
+      <p class="text-muted mb-0">Welcome back, <strong>{{ user.first_name|default:user.username }}</strong>! Track your past crop assessments.</p>
+    </div>
+
+    <a href="{% url 'wizard' %}" class="btn btn-agri-primary">
+      <i class="fas fa-plus me-1"></i> New Plant Check
+    </a>
+  </div>
+
+  <!-- Summary Metric Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="agri-card d-flex align-items-center gap-3">
+        <div class="p-3 bg-success-subtle text-success rounded-circle">
+          <i class="fas fa-stethoscope fa-2x"></i>
+        </div>
+        <div>
+          <h3 class="fw-bold mb-0 text-dark">{{ total_count }}</h3>
+          <span class="text-muted small">Total Assessments</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="agri-card d-flex align-items-center gap-3">
+        <div class="p-3 bg-info-subtle text-info rounded-circle">
+          <i class="fas fa-shield-alt fa-2x"></i>
+        </div>
+        <div>
+          <h3 class="fw-bold mb-0 text-dark">{{ low_risk_count }}</h3>
+          <span class="text-muted small">Low Risk / Healthy</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="agri-card d-flex align-items-center gap-3">
+        <div class="p-3 bg-warning-subtle text-warning rounded-circle">
+          <i class="fas fa-bug fa-2x"></i>
+        </div>
+        <div>
+          <h3 class="fw-bold mb-0 text-dark">{{ disease_count }}</h3>
+          <span class="text-muted small">Potential Disease Flags</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent History Table -->
+  <div class="agri-card p-4">
+    <h5 class="fw-bold text-success mb-3">Recent Assessment History</h5>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Date</th>
+            <th>Crop</th>
+            <th>Assessed Result</th>
+            <th>Confidence</th>
+            <th>Status</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for diag in recent_diagnoses %}
+            <tr>
+              <td>{{ diag.created_at|date:"M d, Y" }}</td>
+              <td><span class="fw-bold text-dark">{{ diag.crop.name }}</span></td>
+              <td>
+                {% if diag.predicted_disease and not diag.is_low_confidence %}
+                  {{ diag.predicted_disease.name }}
+                {% else %}
+                  <span class="text-muted">Uncertain / Unconfirmed</span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="badge bg-success-subtle text-success border border-success-subtle fw-bold">
+                  {{ diag.confidence_pct }}%
+                </span>
+              </td>
+              <td>
+                {% if diag.is_low_confidence %}
+                  <span class="badge bg-warning text-dark">Low Confidence</span>
+                {% else %}
+                  <span class="badge bg-success">Completed</span>
+                {% endif %}
+              </td>
+              <td class="text-end">
+                <a href="{% url 'diagnosis_result' pk=diag.id %}" class="btn btn-sm btn-outline-success me-1">
+                  View
+                </a>
+                <a href="{% url 'download_report_pdf' pk=diag.id %}" class="btn btn-sm btn-light text-muted" title="Download Report">
+                  <i class="fas fa-download"></i> PDF
+                </a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="6" class="text-center py-4 text-muted">
+                <i class="fas fa-info-circle me-1"></i> No plant diagnoses created yet. Click "New Plant Check" to start!
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

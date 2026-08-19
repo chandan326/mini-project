@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block title %}Plant Health Assessment Result | AgriHealth AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="max-width-900 mx-auto">
+    
+    <!-- Top Result Banner -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 pb-3 border-bottom gap-3">
+      <div>
+        <span class="badge bg-success-subtle text-success border border-success-subtle fw-bold mb-2">
+          <i class="fas fa-check-circle me-1"></i> Assessment Completed
+        </span>
+        <h2 class="fw-bold text-dark mb-0">Plant Health Assessment Result</h2>
+        <small class="text-muted">Report ID: {{ diagnosis.id }} | Crop: <strong>{{ diagnosis.crop.name }}</strong></small>
+      </div>
+
+      <div>
+        <a href="{% url 'download_report_pdf' pk=diagnosis.id %}" class="btn btn-agri-primary shadow-sm">
+          <i class="fas fa-file-pdf me-2"></i> Download Report (PDF)
+        </a>
+      </div>
+    </div>
+
+    <!-- Low Confidence / Discrepancy Warning Box -->
+    {% if diagnosis.is_low_confidence or diagnosis.is_inconsistent %}
+      <div class="p-4 bg-warning-subtle text-dark rounded-4 border border-warning mb-4 shadow-sm">
+        <div class="d-flex align-items-start gap-3">
+          <i class="fas fa-exclamation-triangle fa-2x text-warning flex-shrink-0 mt-1"></i>
+          <div>
+            <h5 class="fw-bold text-dark mb-1">We could not identify the problem with sufficient confidence</h5>
+            <p class="small text-muted mb-2">
+              {% if diagnosis.is_inconsistent %}
+                Different photos produced inconsistent visual patterns.
+              {% else %}
+                The confidence score ({{ diagnosis.confidence_pct }}%) is below our reliable threshold (60%).
+              {% endif %}
+              To protect your crop, we do not present uncertain predictions as guaranteed diagnoses.
+            </p>
+            <div class="d-flex flex-wrap gap-2 mt-2">
+              <a href="{% url 'wizard' %}?crop={{ diagnosis.crop.id }}" class="btn btn-sm btn-outline-dark rounded-pill fw-bold">
+                <i class="fas fa-camera me-1"></i> Retake / Upload Clearer Photos
+              </a>
+              <a href="#expertHelp" class="btn btn-sm btn-warning rounded-pill fw-bold">
+                <i class="fas fa-user-md me-1"></i> Consult Agricultural Expert
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- Assessment Summary Card -->
+    <div class="agri-card p-4 p-md-5 mb-4 shadow-sm border-2 border-success-subtle">
+      <div class="row align-items-center g-4">
+        <div class="col-md-7">
+          <small class="text-uppercase fw-bold text-success tracking-wide">Assessed Condition</small>
+          <h2 class="fw-bold text-dark mt-1 mb-2">
+            {% if disease and not diagnosis.is_low_confidence %}
+              {{ disease.name }}
+              {% if disease.name_hi %}<span class="fs-5 text-muted">({{ disease.name_hi }})</span>{% endif %}
+            {% else %}
+              Uncertain / Unconfirmed Symptom
+            {% endif %}
+          </h2>
+          
+          <p class="text-muted small mb-3">
+            <i class="fas fa-seedling text-success me-1"></i> Crop: <strong>{{ diagnosis.crop.name }}</strong>
+            {% if disease and disease.scientific_name %} | <em>{{ disease.scientific_name }}</em>{% endif %}
+          </p>
+
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="fw-bold text-dark">Status:</span>
+            {% if diagnosis.is_low_confidence %}
+              <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fs-6">Unable to determine with certainty</span>
+            {% elif disease and disease.severity == 'HIGH' %}
+              <span class="badge bg-danger text-white px-3 py-2 rounded-pill fs-6">Likely Affected - Severe Risk</span>
+            {% else %}
+              <span class="badge bg-success text-white px-3 py-2 rounded-pill fs-6">Likely Affected - Moderate Issue</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="col-md-5">
+          <!-- Confidence Gauge / Progress Bar -->
+          <div class="p-3 bg-light rounded-4 text-center border">
+            <small class="fw-bold text-muted d-block mb-1">AI Ensemble Confidence Score</small>
+            <div class="display-5 fw-bold text-success mb-2">{{ diagnosis.confidence_pct }}%</div>
+            
+            <div class="progress progress-agri mb-2">
+              <div class="progress-bar progress-bar-agri" role="progressbar" style="width: {{ diagnosis.confidence_pct }}%;" aria-valuenow="{{ diagnosis.confidence_pct }}" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            
+            <small class="text-muted">
+              {% if diagnosis.confidence_pct >= 80 %}
+                High agreement across uploaded images
+              {% elif diagnosis.confidence_pct >= 60 %}
+                Moderate agreement with reported symptoms
+              {% else %}
+                Low confidence threshold flag active
+              {% endif %}
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section: Why This Was Detected -->
+    <div class="agri-card p-4 mb-4">
+      <h4 class="fw-bold text-success mb-3">
+        <i class="fas fa-search me-2"></i> Why This Was Detected
+      </h4>
+      <p class="lead text-dark fs-6 mb-0">{{ diagnosis.explanation }}</p>
+    </div>
+
+    <!-- Section: Symptoms Section -->
+    <div class="agri-card p-4 mb-4">
+      <h4 class="fw-bold text-success mb-3">
+        <i class="fas fa-notes-medical me-2"></i> Common Symptoms
+      </h4>
+      
+      {% if knowledge and knowledge.symptoms_summary %}
+        <p class="text-dark mb-3">{{ knowledge.symptoms_summary }}</p>
+      {% endif %}
+
+      <div class="row g-3">
+        {% if disease %}
+          {% for sym in disease.symptoms.all %}
+            <div class="col-md-4 col-sm-6">
+              <div class="p-3 bg-light rounded-3 border d-flex align-items-center gap-3">
+                <i class="fas {{ sym.icon|default:'fa-check-circle' }} fa-2x text-success"></i>
+                <div>
+                  <div class="fw-bold text-dark">{{ sym.name }}</div>
+                  {% if sym.name_hi %}<small class="text-muted">({{ sym.name_hi }})</small>{% endif %}
+                </div>
+              </div>
+            </div>
+          {% empty %}
+            <div class="col-12">
+              <ul class="list-group list-group-flush">
+                <li class="list-group-item"><i class="fas fa-check text-success me-2"></i> Leaf yellowing / chlorosis</li>
+                <li class="list-group-item"><i class="fas fa-check text-success me-2"></i> Brown spots with concentric rings</li>
+                <li class="list-group-item"><i class="fas fa-check text-success me-2"></i> Leaf curling or wilting</li>
+              </ul>
+            </div>
+          {% endfor %}
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Section: Recommended Management -->
+    {% if knowledge %}
+      <div class="agri-card p-4 mb-4 border-start border-4 border-success">
+        <h4 class="fw-bold text-success mb-3">
+          <i class="fas fa-hand-holding-medical me-2"></i> Recommended Management
+        </h4>
+
+        <div class="row g-4">
+          <div class="col-md-6">
+            <div class="p-3 bg-success-subtle rounded-3 border border-success-subtle h-100">
+              <h6 class="fw-bold text-success mb-2"><i class="fas fa-bolt me-1"></i> 1. Immediate Field Steps</h6>
+              <p class="small text-dark mb-0">{{ knowledge.treatment_immediate }}</p>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="p-3 bg-light rounded-3 border h-100">
+              <h6 class="fw-bold text-dark mb-2"><i class="fas fa-tractor me-1"></i> 2. Crop Management & Cultural Care</h6>
+              <p class="small text-muted mb-0">{{ knowledge.treatment_management }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Prevention Guidance -->
+      <div class="agri-card p-4 mb-4">
+        <h4 class="fw-bold text-success mb-3">
+          <i class="fas fa-shield-alt me-2"></i> Prevention Guidance
+        </h4>
+        <p class="text-dark mb-3">{{ knowledge.prevention_methods }}</p>
+      </div>
+
+      <!-- Section: Monitoring & Expert Referral -->
+      <div class="agri-card p-4 mb-4" id="expertHelp">
+        <h4 class="fw-bold text-success mb-3">
+          <i class="fas fa-user-md me-2"></i> When to Seek Agricultural Expert Assistance
+        </h4>
+        <p class="text-dark mb-0">{{ knowledge.monitoring_guidance }}</p>
+      </div>
+    {% else %}
+      <div class="agri-card p-4 mb-4">
+        <h4 class="fw-bold text-success mb-3">General Crop Care Advice</h4>
+        <p class="text-muted">Ensure adequate plant spacing, avoid prolonged leaf wetness, remove severely infected leaves, and monitor field progression daily.</p>
+      </div>
+    {% endif %}
+
+    <!-- Was This Result Helpful? Feedback Section -->
+    <div class="agri-card p-4 mb-4 bg-light text-center" id="feedbackContainer">
+      <h5 class="fw-bold text-dark mb-2">Was this result helpful?</h5>
+      <p class="text-muted small mb-3">Your feedback helps improve our AI model for all farmers.</p>
+
+      {% if has_feedback %}
+        <div class="alert alert-success d-inline-block px-4 py-2 mb-0 rounded-pill">
+          <i class="fas fa-check-circle me-1"></i> Thank you for your feedback!
+        </div>
+      {% else %}
+        <form id="feedbackForm" action="{% url 'diagnosis_feedback' pk=diagnosis.id %}" method="post">
+          {% csrf_token %}
+          <div class="d-flex justify-content-center gap-3 mb-3">
+            <button type="submit" name="is_helpful" value="true" class="btn btn-outline-success rounded-pill px-4 fw-bold">
+              <i class="fas fa-thumbs-up me-1"></i> Yes, Helpful
+            </button>
+            <button type="button" class="btn btn-outline-danger rounded-pill px-4 fw-bold" data-bs-toggle="collapse" data-bs-target="#unhelpfulReasonBox">
+              <i class="fas fa-thumbs-down me-1"></i> No, Needs Improvement
+            </button>
+          </div>
+
+          <div class="collapse max-width-500 mx-auto text-start" id="unhelpfulReasonBox">
+            <div class="card card-body border-0 shadow-sm mt-3">
+              <label class="fw-bold small mb-2">What went wrong?</label>
+              <select name="reason" class="form-select form-select-sm mb-2">
+                <option value="Wrong disease">Predicted wrong disease</option>
+                <option value="Symptoms didn't match">Symptoms didn't match field condition</option>
+                <option value="Treatment wasn't useful">Treatment guidance wasn't clear</option>
+                <option value="Image upload problem">Image quality issue</option>
+                <option value="Other">Other reason</option>
+              </select>
+              <textarea name="comments" class="form-control form-control-sm mb-3" rows="2" placeholder="Additional comments (optional)..."></textarea>
+              <button type="submit" name="is_helpful" value="false" class="btn btn-sm btn-danger rounded-pill fw-bold">
+                Submit Feedback
+              </button>
+            </div>
+          </div>
+        </form>
+      {% endif %}
+    </div>
+
+    <!-- Action Buttons Bar -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+      <a href="{% url 'wizard' %}" class="btn btn-agri-outline">
+        <i class="fas fa-redo me-1"></i> Assess Another Plant
+      </a>
+      
+      <a href="{% url 'download_report_pdf' pk=diagnosis.id %}" class="btn btn-agri-primary">
+        <i class="fas fa-download me-1"></i> Download PDF Report
+      </a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

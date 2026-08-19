@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block title %}Verified Disease Knowledge Base | AgriHealth AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="text-center max-width-700 mx-auto mb-5">
+    <h2 class="fw-bold text-success display-6">Verified Disease Knowledge Base</h2>
+    <p class="text-muted lead">Search and inspect verified plant disease symptoms, causes, management, and prevention guidance.</p>
+  </div>
+
+  <div class="row g-4">
+    {% for disease in diseases %}
+      <div class="col-md-6 col-lg-4">
+        <div class="agri-card h-100">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <span class="badge bg-success-subtle text-success border border-success-subtle fw-bold">{{ disease.crop.name }}</span>
+            <span class="badge bg-light text-muted border">{{ disease.get_severity_display }}</span>
+          </div>
+
+          <h5 class="fw-bold text-dark mb-1">{{ disease.name }}</h5>
+          {% if disease.scientific_name %}<em class="small text-muted d-block mb-2">{{ disease.scientific_name }}</em>{% endif %}
+
+          <p class="small text-muted mb-3">{{ disease.description|truncatewords:20 }}</p>
+
+          <a href="{% url 'disease_detail' pk=disease.id %}" class="btn btn-agri-outline btn-sm w-100 mt-auto">
+            Read Full Management Guide &rarr;
+          </a>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12 text-center py-5">
+        <p class="text-muted">No disease records available in the knowledge base.</p>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

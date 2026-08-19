@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block title %}{{ disease.name }} - {{ disease.crop.name }} Disease Profile | AgriHealth AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="max-width-900 mx-auto">
+    <a href="{% url 'disease_list' %}" class="btn btn-sm btn-outline-secondary mb-3 rounded-pill">
+      &larr; Back to Knowledge Base
+    </a>
+
+    <div class="agri-card p-4 p-md-5 mb-4 shadow-sm">
+      <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
+        <span class="badge bg-success-subtle text-success fs-6 fw-bold px-3 py-2 rounded-pill">{{ disease.crop.name }} Crop</span>
+        <span class="badge bg-danger text-white px-3 py-2 rounded-pill fs-6">{{ disease.get_severity_display }}</span>
+      </div>
+
+      <h2 class="fw-bold text-dark mb-1">{{ disease.name }}</h2>
+      {% if disease.name_hi %}<span class="text-muted fs-5 d-block">({{ disease.name_hi }})</span>{% endif %}
+      {% if disease.scientific_name %}<em class="text-muted d-block mb-3">{{ disease.scientific_name }}</em>{% endif %}
+
+      <p class="lead text-muted fs-6 mb-4">{{ disease.description }}</p>
+
+      {% if knowledge %}
+        <div class="mb-4">
+          <h5 class="fw-bold text-success mb-2"><i class="fas fa-notes-medical me-2"></i> Field Symptoms Summary</h5>
+          <p class="text-dark">{{ knowledge.symptoms_summary }}</p>
+        </div>
+
+        <div class="mb-4">
+          <h5 class="fw-bold text-success mb-2"><i class="fas fa-bug me-2"></i> Causes & Favorable Conditions</h5>
+          <p class="text-dark mb-1"><strong>Cause:</strong> {{ knowledge.causes }}</p>
+          <p class="text-dark"><strong>Environmental Triggers:</strong> {{ knowledge.favorable_conditions }}</p>
+        </div>
+
+        <div class="mb-4 p-4 bg-light rounded-4 border">
+          <h5 class="fw-bold text-success mb-3"><i class="fas fa-hand-holding-medical me-2"></i> Recommended Immediate Care</h5>
+          <p class="text-dark mb-3">{{ knowledge.treatment_immediate }}</p>
+
+          <h5 class="fw-bold text-dark mb-2"><i class="fas fa-tractor me-2"></i> Cultural & Crop Management</h5>
+          <p class="text-dark mb-0">{{ knowledge.treatment_management }}</p>
+        </div>
+
+        <div class="mb-4">
+          <h5 class="fw-bold text-success mb-2"><i class="fas fa-shield-alt me-2"></i> Prevention Practices</h5>
+          <p class="text-dark">{{ knowledge.prevention_methods }}</p>
+        </div>
+
+        <div class="mb-4">
+          <h5 class="fw-bold text-success mb-2"><i class="fas fa-user-md me-2"></i> Monitoring & Expert Consultation</h5>
+          <p class="text-dark">{{ knowledge.monitoring_guidance }}</p>
+        </div>
+
+        <div class="p-3 bg-light rounded-3 text-muted small border">
+          <strong>Source Reference:</strong> {{ knowledge.source_reference }} | <em>Last Reviewed: {{ knowledge.last_reviewed }}</em>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="text-center">
+      <a href="{% url 'wizard' %}?crop={{ disease.crop.id }}" class="btn btn-agri-primary btn-lg rounded-pill">
+        <i class="fas fa-stethoscope me-2"></i> Run AI Diagnosis for {{ disease.crop.name }}
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

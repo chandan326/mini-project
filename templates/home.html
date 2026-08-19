@@ -1,0 +1,240 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block title %}Protect Your Crops. Detect Plant Diseases Early | AgriHealth AI{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section text-center text-md-start">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-7">
+        <span class="badge bg-light text-success fw-bold px-3 py-2 rounded-pill mb-3 shadow-sm">
+          <i class="fas fa-microchip me-1"></i> AI-Powered Agricultural Assistance
+        </span>
+        <h1 class="hero-headline">
+          {{ UI.HERO_TITLE_1 }}<br>{{ UI.HERO_TITLE_2 }}
+        </h1>
+        <p class="hero-subheading">
+          {{ UI.HERO_SUB }}
+        </p>
+
+        <div class="d-flex flex-wrap gap-3 justify-content-center justify-content-md-start">
+          <a href="{% url 'wizard' %}" class="btn btn-light text-success fw-bold btn-lg px-4 py-3 rounded-pill shadow">
+            <i class="fas fa-stethoscope me-2"></i> {{ UI.CHECK_PLANT }}
+          </a>
+          <a href="{% url 'how_it_works' %}" class="btn btn-outline-light btn-lg px-4 py-3 rounded-pill">
+            <i class="fas fa-play-circle me-2"></i> {{ UI.HOW_IT_WORKS }}
+          </a>
+        </div>
+      </div>
+
+      <div class="col-lg-5 text-center">
+        <!-- Visual illustration box -->
+        <div class="p-4 bg-white text-dark rounded-4 shadow-lg border border-2 border-success-subtle position-relative">
+          <div class="badge bg-success position-absolute top-0 start-50 translate-middle px-3 py-2 rounded-pill fs-6 shadow-sm">
+            <i class="fas fa-shield-alt me-1"></i> {% if UI.is_hi %}5-तस्वीर बहु-कोण विश्लेषण{% else %}5-Photo Multi-Angle Analysis{% endif %}
+          </div>
+          <div class="row g-2 mt-2">
+            <div class="col-6">
+              <div class="p-3 bg-light rounded-3 text-center border">
+                <i class="fas fa-leaf fa-3x text-success mb-2"></i>
+                <div class="fw-bold small text-success">{% if UI.is_hi %}स्वस्थ पत्ती{% else %}Healthy Leaf{% endif %}</div>
+                <span class="badge bg-success-subtle text-success border border-success-subtle mt-1">{% if UI.is_hi %}सामान्य पैटर्न{% else %}Normal Pattern{% endif %}</span>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="p-3 bg-light rounded-3 text-center border">
+                <i class="fas fa-bug fa-3x text-danger mb-2"></i>
+                <div class="fw-bold small text-danger">{% if UI.is_hi %}अंगमारी / धब्बे{% else %}Early Blight / Spot{% endif %}</div>
+                <span class="badge bg-danger-subtle text-danger border border-danger-subtle mt-1">{% if UI.is_hi %}पैटर्न की पहचान{% else %}Pattern Detected{% endif %}</span>
+              </div>
+            </div>
+          </div>
+          <div class="mt-3 text-center small text-muted">
+            <i class="fas fa-robot text-success me-1"></i> {% if UI.is_hi %}त्वरित AI पूर्वानुमान + सत्यापित ज्ञानकोश मिलान{% else %}Instant ensemble prediction + verified knowledge base matching{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="py-5 bg-white">
+  <div class="container">
+    <div class="text-center max-width-700 mx-auto mb-5">
+      <h2 class="fw-bold text-success display-6">{{ UI.HOW_IT_WORKS }}</h2>
+      <p class="text-muted lead">{% if UI.is_hi %}फसल के स्वास्थ्य का मूल्यांकन करने और उपयोगी प्रबंधन सलाह पाने के लिए 4 आसान चरण।{% else %}4 simple steps to evaluate crop health and get actionable management advice.{% endif %}</p>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-md-3 col-sm-6">
+        <div class="agri-card text-center">
+          <div class="mb-3">
+            <span class="badge bg-success-subtle text-success fs-4 p-3 rounded-circle">1</span>
+          </div>
+          <h5 class="fw-bold">{{ UI.STEP_1_CROP }}</h5>
+          <p class="text-muted small mb-0">{% if UI.is_hi %}समर्थित डेटाबेस से अपनी फसल चुनें।{% else %}Choose your plant from our supported crop database.{% endif %}</p>
+        </div>
+      </div>
+
+      <div class="col-md-3 col-sm-6">
+        <div class="agri-card text-center">
+          <div class="mb-3">
+            <span class="badge bg-success-subtle text-success fs-4 p-3 rounded-circle">2</span>
+          </div>
+          <h5 class="fw-bold">{{ UI.STEP_2_PHOTOS }}</h5>
+          <p class="text-muted small mb-0">{% if UI.is_hi %}पत्ती, तने या प्रभावित हिस्से की 5 स्पष्ट तस्वीरें लें।{% else %}Take clear close-up photos of leaf, stem, or affected areas.{% endif %}</p>
+        </div>
+      </div>
+
+      <div class="col-md-3 col-sm-6">
+        <div class="agri-card text-center">
+          <div class="mb-3">
+            <span class="badge bg-success-subtle text-success fs-4 p-3 rounded-circle">3</span>
+          </div>
+          <h5 class="fw-bold">{{ UI.STEP_3_QUESTIONS }}</h5>
+          <p class="text-muted small mb-0">{% if UI.is_hi %}लक्षण, मौसम और फैलाव से जुड़े आसान सवालों के उत्तर दें।{% else %}Provide simple details about symptoms, weather, and onset.{% endif %}</p>
+        </div>
+      </div>
+
+      <div class="col-md-3 col-sm-6">
+        <div class="agri-card text-center">
+          <div class="mb-3">
+            <span class="badge bg-success-subtle text-success fs-4 p-3 rounded-circle">4</span>
+          </div>
+          <h5 class="fw-bold">{{ UI.STEP_4_RESULT }}</h5>
+          <p class="text-muted small mb-0">{% if UI.is_hi %}रोग का अनुमान, लक्षण और उपचार मार्गदर्शन प्राप्त करें।{% else %}Receive disease prediction, symptoms, and treatment guidance.{% endif %}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Supported Crops Section -->
+<section class="py-5 bg-light">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+      <div>
+        <h2 class="fw-bold text-success mb-1">{{ UI.SUPPORTED_CROPS }}</h2>
+        <p class="text-muted mb-0">{% if UI.is_hi %}सामान्य खेत की बीमारियों के लिए प्रशिक्षित AI मॉडल।{% else %}Dynamic crop models trained for common field diseases.{% endif %}</p>
+      </div>
+      <a href="{% url 'crop_list' %}" class="btn btn-agri-outline btn-sm">{% if UI.is_hi %}सभी फसलें देखें &rarr;{% else %}View All Crops &rarr;{% endif %}</a>
+    </div>
+
+    <div class="row g-3">
+      {% for crop in crops %}
+        <div class="col-lg-3 col-md-4 col-6">
+          <a href="{% url 'wizard' %}?crop={{ crop.id }}" class="text-decoration-none">
+            <div class="agri-card text-center h-100">
+              <i class="fas {{ crop.icon_class|default:'fa-seedling' }} fa-3x text-success mb-3"></i>
+              <h5 class="fw-bold text-dark mb-1">{{ crop.display_name }}</h5>
+              {% if UI.is_hi and crop.name %}<span class="text-muted small">({{ crop.name }})</span>{% endif %}
+              <div class="mt-2">
+                <span class="badge bg-light text-success border border-success-subtle">
+                  {{ crop.diseases.count }} {% if UI.is_hi %}रोग मॉडल{% else %}Disease Models{% endif %}
+                </span>
+              </div>
+            </div>
+          </a>
+        </div>
+      {% empty %}
+        <div class="col-12 text-center py-4">
+          <p class="text-muted">Loading supported crops database...</p>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Why Use This Platform? Section -->
+<section class="py-5 bg-white">
+  <div class="container">
+    <div class="text-center max-width-700 mx-auto mb-5">
+      <h2 class="fw-bold text-success display-6">{{ UI.WHY_USE }}</h2>
+      <p class="text-muted lead">{% if UI.is_hi %}सरलता, सुलभता और किसान की विश्वसनीयता के लिए निर्मित।{% else %}Built for simplicity, accessibility, and farmer reliability.{% endif %}</p>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="agri-card">
+          <div class="text-success mb-3"><i class="fas fa-clock fa-2x"></i></div>
+          <h5 class="fw-bold">{% if UI.is_hi %}प्रारंभिक पहचान{% else %}Early Detection{% endif %}</h5>
+          <p class="text-muted small mb-0">{% if UI.is_hi %}बड़े नुकसान से पहले बीमारी के लक्षणों को पहचानें।{% else %}Identify crop vulnerabilities before symptoms cause major field loss.{% endif %}</p>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="agri-card">
+          <div class="text-success mb-3"><i class="fas fa-brain fa-2x"></i></div>
+          <h5 class="fw-bold">{% if UI.is_hi %}AI-सहायता प्राप्त विश्लेषण{% else %}AI-Assisted Analysis{% endif %}</h5>
+          <p class="text-muted small mb-0">{% if UI.is_hi %}मल्टी-इमेज विजुअल संभावना और प्रश्नावली का सटीक मिलान।{% else %}Combines multi-image ML visual probability with questionnaire correlation.{% endif %}</p>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="agri-card">
+          <div class="text-success mb-3"><i class="fas fa-images fa-2x"></i></div>
+          <h5 class="fw-bold">{% if UI.is_hi %}बहु-तस्वीर विश्लेषण{% else %}Multiple Image Analysis{% endif %}</h5>
+          <p class="text-muted small mb-0">{% if UI.is_hi %}सटीक परिणाम के लिए विभिन्न कोणों से 5 तस्वीरें अपलोड करें।{% else %}Upload up to 5 photos from different angles for improved consistency.{% endif %}</p>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="agri-card">
+          <div class="text-success mb-3"><i class="fas fa-mobile-alt fa-2x"></i></div>
+          <h5 class="fw-bold">{% if UI.is_hi %}किसान-अनुकूल इंटरफेस{% else %}Farmer-Friendly Interface{% endif %}</h5>
+          <p class="text-muted small mb-0">{% if UI.is_hi %}बड़े बटनों और आसान विकल्पों के साथ स्मार्टफोन के लिए उपयुक्त।{% else %}Designed for smartphones with large touch targets and minimal typing.{% endif %}</p>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="agri-card">
+          <div class="text-success mb-3"><i class="fas fa-book-medical fa-2x"></i></div>
+          <h5 class="fw-bold">{% if UI.is_hi %}सत्यापित कृषि ज्ञानकोश{% else %}Verified Knowledge Base{% endif %}</h5>
+          <p class="text-muted small mb-0">{% if UI.is_hi %}सत्यापित कृषि संदर्भ सामग्री से प्राप्त देखभाल मार्गदर्शन।{% else %}Explanations and care guidance sourced directly from verified agricultural reference material.{% endif %}</p>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="agri-card">
+          <div class="text-success mb-3"><i class="fas fa-shield-virus fa-2x"></i></div>
+          <h5 class="fw-bold">{% if UI.is_hi %}बचाव और रोकथाम{% else %}Preventive Guidance{% endif %}</h5>
+          <p class="text-muted small mb-0">{% if UI.is_hi %}फसल की दूरी, सिंचाई और खेत की स्वच्छता पर व्यावहारिक सलाह।{% else %}Actionable advice on crop spacing, irrigation, and field sanitation.{% endif %}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Important Safety Notice Section -->
+<section class="py-5 bg-light" id="important-notice">
+  <div class="container">
+    <div class="p-4 p-md-5 bg-white rounded-4 border border-warning shadow-sm">
+      <div class="row align-items-center g-4">
+        <div class="col-md-2 text-center text-md-start">
+          <i class="fas fa-exclamation-triangle fa-4x text-warning"></i>
+        </div>
+        <div class="col-md-10">
+          <h4 class="fw-bold text-dark mb-2">{{ UI.IMPORTANT_NOTICE_TITLE }}</h4>
+          <p class="text-muted mb-0">
+            {{ UI.IMPORTANT_NOTICE_DESC }}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Bottom CTA Bar -->
+<section class="py-5 bg-success text-white text-center">
+  <div class="container py-3">
+    <h2 class="fw-bold mb-3">Ready to Assess Your Plant Health?</h2>
+    <p class="lead opacity-90 mb-4">Upload plant photos now and get instant AI-assisted diagnosis & care recommendations.</p>
+    <a href="{% url 'wizard' %}" class="btn btn-light text-success fw-bold btn-lg px-5 py-3 rounded-pill shadow">
+      <i class="fas fa-leaf me-2"></i> Start Diagnosis Now
+    </a>
+  </div>
+</section>
+{% endblock %}
