@@ -19,3 +19,4 @@ staticfiles/
 # IDE / Editor files
 .vscode/
 .idea/
+scratch/
