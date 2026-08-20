@@ -104,10 +104,15 @@ elif os.getenv('DB_ENGINE') == 'postgresql' or os.getenv('POSTGRES_DB'):
         }
     }
 else:
+    # Writable location for Vercel Serverless environment
+    db_path = BASE_DIR / 'db.sqlite3'
+    if os.getenv('VERCEL'):
+        db_path = Path('/tmp/db.sqlite3')
+
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+            'NAME': db_path,
         }
     }
 
