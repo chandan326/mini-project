@@ -172,8 +172,14 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 20,
 }
 
-# CORS settings
+# CORS and CSRF settings
 CORS_ALLOW_ALL_ORIGINS = True
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.vercel.app',
+    'https://*.now.sh',
+    'http://127.0.0.1:8000',
+    'http://localhost:8000',
+]
 
 # Security Settings
 CSRF_COOKIE_HTTPONLY = True
