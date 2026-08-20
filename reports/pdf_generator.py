@@ -1,9 +1,5 @@
 import os
 from io import BytesIO
-from reportlab.lib.pagesizes import letter
-from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image as RLImage, HRFlowable
 from knowledge_base.services import get_disease_knowledge
 
 def generate_diagnosis_pdf(diagnosis):
@@ -11,6 +7,11 @@ def generate_diagnosis_pdf(diagnosis):
     Generates structured PDF diagnostic report using ReportLab.
     Returns BytesIO buffer.
     """
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib import colors
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image as RLImage, HRFlowable
+
     buffer = BytesIO()
     doc = SimpleDocTemplate(
         buffer,
