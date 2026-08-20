@@ -1,17 +1,14 @@
 import os
 import sys
-from pathlib import Path
 
-# Add project root directory to sys.path
-BASE_DIR = Path(__file__).resolve().parent.parent
-if str(BASE_DIR) not in sys.path:
-    sys.path.insert(0, str(BASE_DIR))
+# Ensure root project directory is on sys.path for Django imports
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 
 from django.core.wsgi import get_wsgi_application
 
-# Vercel entrypoint handlers
-application = get_wsgi_application()
-app = application
-handler = application
+# WSGI handler for Vercel serverless function
+app = get_wsgi_application()
