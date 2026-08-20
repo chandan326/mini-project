@@ -41,9 +41,13 @@ class DiagnosisCreateAPIView(APIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class DiagnosisDetailAPIView(generics.RetrieveAPIView):
-    queryset = Diagnosis.objects.all()
     serializer_class = DiagnosisSerializer
 
+    def get_queryset(self):
+        return Diagnosis.objects.all()
+
 class FeedbackCreateAPIView(generics.CreateAPIView):
-    queryset = Feedback.objects.all()
     serializer_class = FeedbackSerializer
+
+    def get_queryset(self):
+        return Feedback.objects.all()

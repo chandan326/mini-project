@@ -13,10 +13,14 @@ def crop_detail_view(request, slug):
     return render(request, 'crops/crop_detail.html', {'crop': crop, 'diseases': diseases})
 
 class CropListAPIView(generics.ListAPIView):
-    queryset = Crop.objects.filter(is_active=True)
     serializer_class = CropSerializer
 
+    def get_queryset(self):
+        return Crop.objects.filter(is_active=True)
+
 class CropDetailAPIView(generics.RetrieveAPIView):
-    queryset = Crop.objects.filter(is_active=True)
     serializer_class = CropSerializer
     lookup_field = 'slug'
+
+    def get_queryset(self):
+        return Crop.objects.filter(is_active=True)

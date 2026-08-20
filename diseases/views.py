@@ -23,5 +23,7 @@ class DiseaseListAPIView(generics.ListAPIView):
         return queryset
 
 class DiseaseDetailAPIView(generics.RetrieveAPIView):
-    queryset = Disease.objects.filter(active=True)
     serializer_class = DiseaseSerializer
+
+    def get_queryset(self):
+        return Disease.objects.filter(active=True)
