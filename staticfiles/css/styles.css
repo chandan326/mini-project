@@ -1,0 +1,358 @@
+/* ==========================================================================
+   AgriHealth AI - Modern Responsive Agricultural Design System
+   ========================================================================== */
+
+:root {
+  --primary-green: #1E5631;
+  --primary-green-hover: #143d22;
+  --secondary-green: #4C9A2A;
+  --accent-leaf: #78C850;
+  --soft-bg: #F4F7F4;
+  --card-bg: #FFFFFF;
+  --text-dark: #1C251C;
+  --text-muted: #5C6B5C;
+  --border-light: #E1E8E1;
+  --shadow-sm: 0 2px 8px rgba(30, 86, 49, 0.06);
+  --shadow-md: 0 4px 16px rgba(30, 86, 49, 0.10);
+  --shadow-lg: 0 8px 30px rgba(30, 86, 49, 0.14);
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-pill: 50px;
+  --transition-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: var(--soft-bg);
+  color: var(--text-dark);
+  line-height: 1.6;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* Typography & Links */
+a {
+  color: var(--primary-green);
+  text-decoration: none;
+  transition: var(--transition-fast);
+}
+
+a:hover {
+  color: var(--secondary-green);
+}
+
+/* Navbar */
+.navbar-agri {
+  background-color: #FFFFFF;
+  border-bottom: 2px solid var(--border-light);
+  box-shadow: var(--shadow-sm);
+  padding: 0.8rem 1rem;
+}
+
+/* Equal Size Header Control Elements */
+.header-btn {
+  height: 38px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 1.25rem !important;
+  font-size: 0.875rem !important;
+  font-weight: 700 !important;
+  border-radius: 50px !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  box-sizing: border-box !important;
+}
+
+.header-select {
+  height: 38px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 0 1.75rem 0 1rem !important;
+  font-size: 0.875rem !important;
+  font-weight: 700 !important;
+  border-radius: 50px !important;
+  line-height: 1 !important;
+  box-sizing: border-box !important;
+}
+
+.navbar-brand-agri {
+  font-weight: 800;
+  font-size: 1.4rem;
+  color: var(--primary-green) !important;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nav-link-agri {
+  font-weight: 600;
+  color: var(--text-dark) !important;
+  padding: 0.5rem 0.9rem !important;
+  border-radius: var(--radius-sm);
+  transition: var(--transition-fast);
+}
+
+.nav-link-agri:hover, .nav-link-agri.active {
+  color: var(--primary-green) !important;
+  background-color: rgba(76, 154, 42, 0.08);
+}
+
+.btn-agri-primary {
+  background-color: var(--primary-green);
+  color: #FFFFFF !important;
+  font-weight: 700;
+  padding: 0.7rem 1.6rem;
+  border-radius: var(--radius-pill);
+  border: none;
+  box-shadow: 0 4px 12px rgba(30, 86, 49, 0.25);
+  transition: var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-agri-primary:hover {
+  background-color: var(--primary-green-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(30, 86, 49, 0.35);
+}
+
+.btn-agri-outline {
+  background-color: transparent;
+  color: var(--primary-green) !important;
+  border: 2px solid var(--primary-green);
+  font-weight: 700;
+  padding: 0.65rem 1.5rem;
+  border-radius: var(--radius-pill);
+  transition: var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-agri-outline:hover {
+  background-color: var(--primary-green);
+  color: #FFFFFF !important;
+  transform: translateY(-2px);
+}
+
+/* Hero Section */
+.hero-section {
+  background: linear-gradient(135deg, #1E5631 0%, #2A703F 50%, #4C9A2A 100%);
+  color: #FFFFFF;
+  padding: 4rem 1rem 5rem 1rem;
+  border-bottom-left-radius: var(--radius-lg);
+  border-bottom-right-radius: var(--radius-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-headline {
+  font-weight: 900;
+  font-size: 2.7rem;
+  line-height: 1.2;
+  margin-bottom: 1rem;
+  letter-spacing: -0.5px;
+}
+
+.hero-subheading {
+  font-size: 1.2rem;
+  opacity: 0.92;
+  max-width: 680px;
+  margin-bottom: 2rem;
+  font-weight: 400;
+}
+
+/* Feature Cards & Crop Cards */
+.agri-card {
+  background: var(--card-bg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-sm);
+  padding: 1.5rem;
+  transition: var(--transition-fast);
+  height: 100%;
+}
+
+.agri-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--secondary-green);
+}
+
+.crop-card {
+  cursor: pointer;
+  text-align: center;
+  padding: 1.5rem 1rem;
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-md);
+  background: #FFFFFF;
+  transition: var(--transition-fast);
+}
+
+.crop-card:hover, .crop-card.selected {
+  border-color: var(--primary-green);
+  background: rgba(120, 200, 80, 0.08);
+  transform: scale(1.03);
+}
+
+.crop-card .crop-icon {
+  font-size: 2.5rem;
+  color: var(--primary-green);
+  margin-bottom: 0.75rem;
+}
+
+/* Wizard Step Bar */
+.wizard-step-bar {
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+  margin: 2rem 0 2.5rem 0;
+  padding: 0 1rem;
+}
+
+.wizard-step-bar::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 5%;
+  right: 5%;
+  height: 3px;
+  background: var(--border-light);
+  z-index: 1;
+  transform: translateY(-50%);
+}
+
+.step-item {
+  position: relative;
+  z-index: 2;
+  background: #FFFFFF;
+  border: 3px solid var(--border-light);
+  color: var(--text-muted);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.95rem;
+  transition: var(--transition-fast);
+}
+
+.step-item.active {
+  border-color: var(--primary-green);
+  background: var(--primary-green);
+  color: #FFFFFF;
+  box-shadow: 0 0 0 5px rgba(30, 86, 49, 0.15);
+}
+
+.step-item.completed {
+  border-color: var(--secondary-green);
+  background: var(--secondary-green);
+  color: #FFFFFF;
+}
+
+.step-label {
+  position: absolute;
+  top: 48px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--text-dark);
+  text-transform: uppercase;
+}
+
+/* Image Upload Slots */
+.upload-slot-card {
+  border: 2px dashed var(--border-light);
+  border-radius: var(--radius-md);
+  background: #FFFFFF;
+  padding: 1rem;
+  text-align: center;
+  position: relative;
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-fast);
+}
+
+.upload-slot-card:hover {
+  border-color: var(--primary-green);
+  background: rgba(244, 247, 244, 0.8);
+}
+
+.upload-preview-img {
+  max-width: 100%;
+  max-height: 120px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+}
+
+/* Loading Overlay & Animation */
+.loading-box {
+  background: #FFFFFF;
+  border-radius: var(--radius-lg);
+  padding: 3rem 2rem;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+}
+
+.spinner-agri {
+  width: 60px;
+  height: 60px;
+  border: 5px solid var(--border-light);
+  border-top-color: var(--primary-green);
+  border-radius: 50%;
+  animation: spin 1s infinite linear;
+  margin: 0 auto 1.5rem auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Confidence Meter */
+.confidence-gauge-container {
+  position: relative;
+  margin: 1.5rem 0;
+}
+
+.progress-agri {
+  height: 14px;
+  border-radius: var(--radius-pill);
+  background-color: var(--border-light);
+  overflow: hidden;
+}
+
+.progress-bar-agri {
+  background: linear-gradient(90deg, #4C9A2A 0%, #78C850 100%);
+  border-radius: var(--radius-pill);
+  transition: width 1s ease-in-out;
+}
+
+/* Mobile responsive fixes */
+@media (max-width: 768px) {
+  .hero-headline {
+    font-size: 2rem;
+  }
+  .hero-subheading {
+    font-size: 1rem;
+  }
+  .wizard-step-bar {
+    padding: 0;
+  }
+  .step-label {
+    font-size: 0.65rem;
+  }
+}

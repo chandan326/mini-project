@@ -11,9 +11,8 @@ db.sqlite3
 db.sqlite3-journal
 .env
 
-# Media uploads & static files
+# Media uploads
 media/
-staticfiles/
 .DS_Store
 
 # IDE / Editor files
