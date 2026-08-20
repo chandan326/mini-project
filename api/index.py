@@ -11,5 +11,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 
 from django.core.wsgi import get_wsgi_application
 
-# Vercel entrypoint handler
-app = get_wsgi_application()
+# Vercel entrypoint handlers
+application = get_wsgi_application()
+app = application
+handler = application
