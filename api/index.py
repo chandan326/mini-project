@@ -14,20 +14,22 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 import django
 django.setup()
 
-# Auto-migrate and seed database on Vercel
-if os.getenv('VERCEL'):
-    try:
-        from django.core.management import call_command
-        call_command('migrate', interactive=False)
-        call_command('seed_data')
-    except Exception as e:
-        print("Vercel DB Init Notice:", e)
-
 from django.core.wsgi import get_wsgi_application
-
 _django_app = get_wsgi_application()
 
+def _ensure_db_initialized():
+    if os.getenv('VERCEL') and not os.path.exists('/tmp/db_initialized'):
+        try:
+            from django.core.management import call_command
+            call_command('migrate', interactive=False)
+            call_command('seed_data')
+            with open('/tmp/db_initialized', 'w') as f:
+                f.write('initialized')
+        except Exception as e:
+            print("Vercel DB Init Notice:", e)
+
 def app(environ, start_response):
+    _ensure_db_initialized()
     try:
         return _django_app(environ, start_response)
     except Exception:
