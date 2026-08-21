@@ -106,8 +106,10 @@ elif os.getenv('DB_ENGINE') == 'postgresql' or os.getenv('POSTGRES_DB'):
 else:
     # Writable location for Vercel Serverless environment
     db_path = BASE_DIR / 'db.sqlite3'
-    if os.getenv('VERCEL'):
-        db_path = Path('/tmp/db.sqlite3')
+    if os.getenv('VERCEL') or os.getenv('AWS_LAMBDA_FUNCTION_NAME'):
+        tmp_dir = Path('/tmp')
+        os.makedirs(tmp_dir, exist_ok=True)
+        db_path = tmp_dir / 'db.sqlite3'
 
     DATABASES = {
         'default': {

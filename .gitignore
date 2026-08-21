@@ -7,7 +7,7 @@ ENV/
 env/
 
 # Database & local secrets
-db.sqlite3
+# db.sqlite3
 db.sqlite3-journal
 .env
 
