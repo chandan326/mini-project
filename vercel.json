@@ -3,7 +3,25 @@
   "builds": [
     {
       "src": "api/index.py",
-      "use": "@vercel/python"
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "15mb",
+        "includeFiles": [
+          "db.sqlite3",
+          "templates/**",
+          "static/**",
+          "staticfiles/**",
+          "accounts/**",
+          "config/**",
+          "core/**",
+          "crops/**",
+          "diagnosis/**",
+          "diseases/**",
+          "knowledge_base/**",
+          "ml_model/**",
+          "reports/**"
+        ]
+      }
     }
   ],
   "routes": [

@@ -162,6 +162,9 @@ WHITENOISE_MANIFEST_STRICT = False
 # Media files (Uploaded images & generated PDF reports)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+if os.getenv('VERCEL') or os.getenv('AWS_LAMBDA_FUNCTION_NAME'):
+    MEDIA_ROOT = Path('/tmp/media')
+    os.makedirs(MEDIA_ROOT, exist_ok=True)
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
