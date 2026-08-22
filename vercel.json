@@ -5,7 +5,6 @@
       "src": "api/index.py",
       "use": "@vercel/python",
       "config": {
-        "maxLambdaSize": "15mb",
         "includeFiles": [
           "db.sqlite3",
           "templates/**",
