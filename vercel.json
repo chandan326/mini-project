@@ -6,19 +6,7 @@
       "use": "@vercel/python",
       "config": {
         "includeFiles": [
-          "db.sqlite3",
-          "templates/**",
-          "static/**",
-          "staticfiles/**",
-          "accounts/**",
-          "config/**",
-          "core/**",
-          "crops/**",
-          "diagnosis/**",
-          "diseases/**",
-          "knowledge_base/**",
-          "ml_model/**",
-          "reports/**"
+          "**"
         ]
       }
     }
