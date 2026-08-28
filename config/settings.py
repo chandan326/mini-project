@@ -14,9 +14,9 @@ DEBUG = os.getenv('DEBUG', 'False' if os.getenv('VERCEL') else 'True').lower() =
 
 ALLOWED_HOSTS = [
     host.strip()
-    for host in os.getenv(
-        'ALLOWED_HOSTS',
-        '.vercel.app,greenhealth-indol.vercel.app,127.0.0.1,localhost',
+    for host in (
+        os.getenv('ALLOWED_HOSTS')
+        or '.vercel.app,greenhealth-indol.vercel.app,127.0.0.1,localhost'
     ).split(',')
     if host.strip()
 ]
