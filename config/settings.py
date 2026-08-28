@@ -1,15 +1,25 @@
 import os
+import secrets
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Quick-start development settings - unsuitable for production
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-agri-ai-plant-health-secret-key-2026')
+# Never commit a production secret. Set SECRET_KEY in Vercel; the generated
+# fallback keeps local/demo instances bootable without exposing credentials.
+SECRET_KEY = os.getenv('SECRET_KEY') or secrets.token_urlsafe(50)
 
-DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
+DEBUG = os.getenv('DEBUG', 'False' if os.getenv('VERCEL') else 'True').lower() == 'true'
 
-ALLOWED_HOSTS = ['.vercel.app', 'now.sh', '127.0.0.1', 'localhost', '*']
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.getenv(
+        'ALLOWED_HOSTS',
+        '.vercel.app,greenhealth-indol.vercel.app,127.0.0.1,localhost',
+    ).split(',')
+    if host.strip()
+]
 
 # Application definition
 INSTALLED_APPS = [
@@ -158,6 +168,8 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 WHITENOISE_MANIFEST_STRICT = False
+# Serverless builds do not need a checked-in collectstatic directory.
+WHITENOISE_USE_FINDERS = bool(os.getenv('VERCEL'))
 
 # Media files (Uploaded images & generated PDF reports)
 MEDIA_URL = '/media/'
@@ -178,10 +190,14 @@ REST_FRAMEWORK = {
 }
 
 # CORS and CSRF settings
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = os.getenv('CORS_ALLOW_ALL_ORIGINS', 'False').lower() == 'true'
+CORS_ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
+    if origin.strip()
+]
 CSRF_TRUSTED_ORIGINS = [
-    'https://*.vercel.app',
-    'https://*.now.sh',
+    'https://greenhealth-indol.vercel.app',
     'http://127.0.0.1:8000',
     'http://localhost:8000',
 ]

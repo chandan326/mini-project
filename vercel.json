@@ -1,12 +1,25 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
   "builds": [
     {
       "src": "api/index.py",
       "use": "@vercel/python",
       "config": {
+        "runtime": "python3.12",
         "includeFiles": [
-          "**"
+          "db.sqlite3",
+          "templates/**",
+          "static/**",
+          "accounts/**",
+          "config/**",
+          "core/**",
+          "crops/**",
+          "diagnosis/**",
+          "diseases/**",
+          "knowledge_base/**",
+          "ml_model/**",
+          "reports/**"
         ]
       }
     }
@@ -14,7 +27,7 @@
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "api/index.py"
+      "dest": "/api/index.py"
     }
   ]
 }
