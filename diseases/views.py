@@ -19,6 +19,9 @@ class DiseaseListAPIView(generics.ListAPIView):
         queryset = Disease.objects.filter(active=True).select_related('crop').prefetch_related('symptoms')
         crop_id = self.request.query_params.get('crop_id')
         if crop_id:
+            if not crop_id.isdigit() or len(crop_id) > 10:
+                from rest_framework.exceptions import ValidationError
+                raise ValidationError({'crop_id': 'Enter a valid crop ID.'})
             queryset = queryset.filter(crop_id=crop_id)
         return queryset
 
@@ -26,4 +29,4 @@ class DiseaseDetailAPIView(generics.RetrieveAPIView):
     serializer_class = DiseaseSerializer
 
     def get_queryset(self):
-        return Disease.objects.filter(active=True)
+        return Disease.objects.filter(active=True).select_related('crop').prefetch_related('symptoms')

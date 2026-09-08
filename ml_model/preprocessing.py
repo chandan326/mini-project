@@ -18,7 +18,7 @@ def validate_and_preprocess_image(image_path_or_file):
         img = Image.open(image_path_or_file)
         
         width, height = img.size
-        if width < 80 or height < 80:
+        if width < 200 or height < 200:
             return {
                 'is_valid': False,
                 'warning': 'Image resolution too low. Please upload a clear photo (at least 200x200 pixels).',
@@ -35,6 +35,7 @@ def validate_and_preprocess_image(image_path_or_file):
 
         # Convert to RGB for lighting & contrast analysis
         rgb_img = img.convert('RGB')
+        rgb_img.thumbnail((512, 512))
         stat = ImageStat.Stat(rgb_img)
 
         # Average brightness (mean of R, G, B channels)
@@ -53,7 +54,7 @@ def validate_and_preprocess_image(image_path_or_file):
             }
 
         # Sharpness / variance check for blur detection
-        gray_img = img.convert('L')
+        gray_img = rgb_img.convert('L')
         gray_stat = ImageStat.Stat(gray_img)
         std_dev = gray_stat.stddev[0]
 
@@ -74,3 +75,7 @@ def validate_and_preprocess_image(image_path_or_file):
             'warning': 'Could not parse image file. Please upload a valid image.',
             'processed_image': None
         }
+
+    finally:
+        if hasattr(image_path_or_file, 'seek'):
+            image_path_or_file.seek(0)

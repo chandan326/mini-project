@@ -45,16 +45,24 @@ INSTALLED_APPS = [
     'reports.apps.ReportsConfig',
 ]
 
-# Cloudinary Integration (if configured in environment)
-if os.getenv('CLOUDINARY_CLOUD_NAME'):
+# Django 5.2 reads STORAGES, not the removed DEFAULT_FILE_STORAGE setting.
+CLOUDINARY_CONFIGURED = bool(os.getenv('CLOUDINARY_URL') or all(os.getenv(key) for key in (
+    'CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET')))
+STORAGES = {
+    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+    'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage'},
+}
+if CLOUDINARY_CONFIGURED:
     INSTALLED_APPS.insert(0, 'cloudinary_storage')
     INSTALLED_APPS.append('cloudinary')
-    CLOUDINARY_STORAGE = {
-        'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
-        'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
-        'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
-    }
-    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+    CLOUDINARY_STORAGE = {'SECURE': True}
+    if not os.getenv('CLOUDINARY_URL'):
+        CLOUDINARY_STORAGE.update({
+            'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
+            'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
+            'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
+        })
+    STORAGES['default'] = {'BACKEND': 'core.storage.BoundedCloudinaryStorage'}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -166,7 +174,6 @@ LOCALE_PATHS = [
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 WHITENOISE_MANIFEST_STRICT = False
 # Serverless builds do not need a checked-in collectstatic directory.
 WHITENOISE_USE_FINDERS = bool(os.getenv('VERCEL'))
@@ -187,6 +194,8 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
+    'DEFAULT_THROTTLE_CLASSES': ['rest_framework.throttling.ScopedRateThrottle'],
+    'DEFAULT_THROTTLE_RATES': {'diagnosis': '12/minute', 'feedback': '30/minute'},
 }
 
 # CORS and CSRF settings
@@ -201,17 +210,33 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:8000',
     'http://localhost:8000',
 ]
+CSRF_TRUSTED_ORIGINS += [origin.strip() for origin in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') if origin.strip()]
+for host_key in ('VERCEL_URL', 'VERCEL_PROJECT_PRODUCTION_URL'):
+    if os.getenv(host_key):
+        CSRF_TRUSTED_ORIGINS.append('https://' + os.environ[host_key])
 
 # Security Settings
 CSRF_COOKIE_HTTPONLY = True
 SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+LOGIN_URL = '/accounts/login/'
+LOGIN_REDIRECT_URL = '/accounts/dashboard/'
+MESSAGE_TAGS = {40: 'danger'}
 
 # Platform Custom Settings
 DEMO_MODE = os.getenv('DEMO_MODE', 'True').lower() == 'true'
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
+GEMINI_MODEL = os.getenv('GEMINI_MODEL') or 'gemini-3.8-flash'
 CONFIDENCE_THRESHOLD = float(os.getenv('CONFIDENCE_THRESHOLD') or '0.60')
 CONSISTENCY_THRESHOLD = float(os.getenv('CONSISTENCY_THRESHOLD') or '0.50')
 MAX_DIAGNOSIS_IMAGES = 5
 MIN_DIAGNOSIS_IMAGES = 1
+MAX_UPLOAD_BYTES = 4 * 1024 * 1024
+DATA_UPLOAD_MAX_MEMORY_SIZE = MAX_UPLOAD_BYTES
+DATA_UPLOAD_MAX_NUMBER_FILES = 10
+FILE_UPLOAD_MAX_MEMORY_SIZE = MAX_UPLOAD_BYTES
 
 # Image retention policy default ('TEMPORARY', 'PROCESSED', 'STORED_WITH_USER_PERMISSION', 'DELETED')
 DEFAULT_IMAGE_RETENTION_POLICY = os.getenv('IMAGE_RETENTION_POLICY', 'PROCESSED')

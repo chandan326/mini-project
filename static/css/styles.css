@@ -356,3 +356,21 @@ a:hover {
     font-size: 0.65rem;
   }
 }
+
+/* Compact photo controls; animations respect the user's motion preference. */
+.photo-drop-zone { border: 2px dashed #c5daca; border-radius: 16px; padding: 12px; background: #f8fcf9; transition: border-color .15s ease, background-color .15s ease; }
+.photo-drop-zone.dragging { border-color: #238343; background: #e8f6ec; }
+.photo-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.photo-card { position: relative; overflow: hidden; border: 1px solid #d7e6dc; border-radius: 12px; background: white; }
+.photo-card img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+.photo-caption { display: block; padding: 8px; font-size: .78rem; color: #295638; }
+.photo-remove { position: absolute; top: 6px; right: 6px; width: 34px; height: 34px; border-radius: 50%; background: #fff; border: 1px solid #d4ddd7; color: #943328; font-size: 22px; line-height: 1; }
+.photo-guidance { padding: 12px 14px; border-radius: 10px; background: #eaf4ed; color: #315c3e; font-size: .85rem; }
+.camera-dialog { width: min(94vw, 540px); border: 0; border-radius: 18px; padding: 20px; box-shadow: 0 20px 70px #0004; }
+.camera-dialog::backdrop { background: #102719bd; }
+.camera-dialog video { width: 100%; aspect-ratio: 4 / 3; background: #172d20; border-radius: 10px; object-fit: contain; }
+.crop-select-card { font: inherit; background: white; }
+.crop-select-card:focus-visible, .photo-remove:focus-visible { outline: 3px solid #318847; outline-offset: 3px; }
+[hidden] { display: none !important; }
+@media (max-width: 575px) { .photo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } .photo-toolbar .btn { padding: 10px 12px; } .camera-dialog { padding: 16px; } #btn-next, #btn-submit { padding-left: 18px !important; padding-right: 18px !important; font-size: 1rem !important; } #btn-prev { padding-left: 14px !important; padding-right: 14px !important; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }

@@ -1,6 +1,8 @@
 from django import forms
 from django.contrib.auth.models import User
 from .models import FarmerProfile
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 
 class FarmerRegistrationForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Create password'}))
@@ -24,4 +26,9 @@ class FarmerRegistrationForm(forms.ModelForm):
 
         if password and confirm_password and password != confirm_password:
             self.add_error('confirm_password', 'Passwords do not match.')
+        if password:
+            try:
+                validate_password(password, User(username=cleaned_data.get('username', ''), email=cleaned_data.get('email', '')))
+            except ValidationError as exc:
+                self.add_error('password', exc)
         return cleaned_data

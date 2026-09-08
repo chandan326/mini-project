@@ -1,97 +1,76 @@
-import json
-from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse, HttpResponseBadRequest
+import logging
+from django.shortcuts import render, redirect
+from django.http import JsonResponse, FileResponse
+from django.shortcuts import get_object_or_404
 from django.contrib import messages
+from django.views.decorators.http import require_POST
+from rest_framework.exceptions import APIException
 from crops.models import Crop
 from diseases.models import Symptom
-from .models import Diagnosis, Feedback
-from .services import create_diagnosis_session, process_diagnosis_images, execute_diagnosis_pipeline
+from .models import Feedback
+from .access import get_accessible_diagnosis
+from .serializers import DiagnosisSerializer, FeedbackInputSerializer
+from .submission import submit_diagnosis
 from knowledge_base.services import get_disease_knowledge
 
+logger = logging.getLogger(__name__)
+
+
 def wizard_view(request):
-    """5-Step Diagnosis Wizard UI."""
-    crops = Crop.objects.filter(is_active=True)
-    symptoms = Symptom.objects.all()
-
+    context = {'crops': Crop.objects.filter(is_active=True), 'symptoms': Symptom.objects.all()}
     if request.method == 'POST':
-        crop_id = request.POST.get('crop_id')
-        if not crop_id:
-            messages.error(request, 'Please select a crop to proceed.')
-            return redirect('wizard')
-
-        crop = get_object_or_404(Crop, id=crop_id)
-        
-        # Collect uploaded images (up to 5)
-        image_files = []
-        for i in range(1, 6):
-            img = request.FILES.get(f'image_{i}')
-            if img:
-                image_files.append(img)
-
-        if not image_files:
-            messages.error(request, 'Please upload at least 1 clear image of the affected plant.')
-            return redirect('wizard')
-
-        # Collect farmer questionnaire answers
-        affected_parts = request.POST.getlist('affected_parts')
-        visible_symptoms = request.POST.getlist('visible_symptoms')
-
-        answers_data = {
-            'first_noticed': request.POST.get('first_noticed', 'Today'),
-            'affected_parts': affected_parts,
-            'visible_symptoms': visible_symptoms,
-            'is_spreading': request.POST.get('is_spreading', 'Not sure'),
-            'weather_condition': request.POST.get('weather_condition', 'Humid'),
-            'treatment_applied': request.POST.get('treatment_applied', 'No'),
-            'treatment_details': request.POST.get('treatment_details', ''),
-        }
-
-        # Create session & process
-        diagnosis = create_diagnosis_session(crop=crop, user=request.user)
-        process_diagnosis_images(diagnosis, image_files)
-        execute_diagnosis_pipeline(diagnosis, answers_data)
-
+        ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+        try:
+            diagnosis = submit_diagnosis(request, request.POST, request.FILES)
+        except APIException as exc:
+            if ajax:
+                return JsonResponse({'errors': exc.detail}, status=exc.status_code)
+            context['submission_error'] = exc.detail
+            return render(request, 'diagnosis/wizard.html', context, status=exc.status_code)
+        except Exception:
+            logger.exception('Assessment submission failed')
+            message = 'We could not complete the assessment. Please retry in a moment.'
+            if ajax:
+                return JsonResponse({'error': message}, status=503)
+            context['submission_error'] = message
+            return render(request, 'diagnosis/wizard.html', context, status=503)
+        if ajax:
+            return JsonResponse(DiagnosisSerializer(diagnosis, context={'request': request}).data, status=201)
         return redirect('diagnosis_result', pk=diagnosis.id)
+    return render(request, 'diagnosis/wizard.html', context)
 
-    return render(request, 'diagnosis/wizard.html', {
-        'crops': crops,
-        'symptoms': symptoms
-    })
 
 def result_view(request, pk):
-    """Detailed Assessment Result View."""
-    diagnosis = get_object_or_404(Diagnosis, pk=pk)
-    disease = diagnosis.predicted_disease
-    knowledge = get_disease_knowledge(disease) if disease else None
-    
-    # Check if feedback already submitted
-    has_feedback = diagnosis.feedbacks.exists()
-
+    diagnosis = get_accessible_diagnosis(request, pk)
+    # Demo and uncertain predictions must not present disease-specific care as a diagnosis.
+    disease = diagnosis.predicted_disease if not diagnosis.is_demo and not diagnosis.is_low_confidence else None
     return render(request, 'diagnosis/result.html', {
         'diagnosis': diagnosis,
         'disease': disease,
-        'knowledge': knowledge,
-        'has_feedback': has_feedback
+        'knowledge': get_disease_knowledge(disease),
+        'has_feedback': diagnosis.feedbacks.exists(),
     })
 
+
+@require_POST
 def feedback_view(request, pk):
-    """Handles POST feedback submission for diagnosis."""
-    diagnosis = get_object_or_404(Diagnosis, pk=pk)
-    if request.method == 'POST':
-        is_helpful = request.POST.get('is_helpful') == 'true'
-        reason = request.POST.get('reason', '')
-        comments = request.POST.get('comments', '')
+    diagnosis = get_accessible_diagnosis(request, pk)
+    serializer = FeedbackInputSerializer(data=request.POST)
+    if not serializer.is_valid():
+        return JsonResponse({'errors': serializer.errors}, status=400)
+    Feedback.objects.update_or_create(diagnosis=diagnosis, defaults=serializer.validated_data)
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({'status': 'success', 'message': 'Thank you for your feedback!'})
+    messages.success(request, 'Thank you for your feedback!')
+    return redirect('diagnosis_result', pk=diagnosis.id)
 
-        Feedback.objects.create(
-            diagnosis=diagnosis,
-            is_helpful=is_helpful,
-            reason=reason,
-            comments=comments
-        )
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({'status': 'success', 'message': 'Thank you for your feedback!'})
-        
-        messages.success(request, 'Thank you for helping improve our agricultural platform!')
-        return redirect('diagnosis_result', pk=diagnosis.id)
 
-    return HttpResponseBadRequest("Invalid method")
+def image_view(request, pk, image_id):
+    diagnosis = get_accessible_diagnosis(request, pk)
+    image = get_object_or_404(diagnosis.images, pk=image_id)
+    try:
+        response = FileResponse(image.image.open('rb'), content_type='image/jpeg')
+        response['Cache-Control'] = 'private, max-age=300'
+        return response
+    except Exception:
+        return JsonResponse({'error': 'Photo is temporarily unavailable.'}, status=503)

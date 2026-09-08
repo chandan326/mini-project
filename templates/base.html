@@ -1,6 +1,6 @@
 {% load static i18n %}
 <!DOCTYPE html>
-<html lang="{{ LANGUAGE_CODE|default:'en' }}">
+<html lang="{{ UI.current_lang|default:'en' }}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -36,7 +36,7 @@
           <form action="/i18n/setlang/" method="post" class="d-inline">
             {% csrf_token %}
             <input name="next" type="hidden" value="{{ request.get_full_path }}">
-            <select name="language" onchange="this.form.submit()" class="form-select header-select border-success text-success fw-bold">
+            <select name="language" aria-label="Language" onchange="this.form.submit()" class="form-select header-select border-success text-success fw-bold">
               <option value="en" {% if UI.current_lang == 'en' %}selected{% endif %}>🇬🇧 English</option>
               <option value="hi" {% if UI.current_lang == 'hi' %}selected{% endif %}>🇮🇳 हिन्दी</option>
             </select>
@@ -49,7 +49,7 @@
             <a href="{% url 'dashboard' %}" class="btn btn-outline-success header-btn">
               <i class="fas fa-user-circle me-1"></i> {{ UI.DASHBOARD }}
             </a>
-            <a href="{% url 'logout' %}" class="btn btn-sm btn-light text-muted header-btn">Logout</a>
+            <form action="{% url 'logout' %}" method="post">{% csrf_token %}<button class="btn btn-sm btn-light text-muted header-btn" type="submit">Logout</button></form>
           {% else %}
             <a href="{% url 'home' %}#important-notice" class="btn btn-warning text-dark header-btn">
               <i class="fas fa-exclamation-circle me-1"></i> {{ UI.NOTICE }}

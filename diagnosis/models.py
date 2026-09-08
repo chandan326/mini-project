@@ -44,6 +44,15 @@ class Diagnosis(models.Model):
     def confidence_pct(self):
         return int(self.confidence_score * 100)
 
+    @property
+    def analysis_method(self):
+        # Existing records were produced exclusively by the demo predictor.
+        return 'gemini' if self.explanation.startswith('AI image assessment:') else 'demo'
+
+    @property
+    def is_demo(self):
+        return self.analysis_method == 'demo'
+
 class DiagnosisImage(models.Model):
     diagnosis = models.ForeignKey(Diagnosis, on_delete=models.CASCADE, related_name='images')
     slot_number = models.PositiveSmallIntegerField(default=1, help_text="Slot index 1 to 5")

@@ -1,53 +1,51 @@
-from rest_framework import status, generics
-from rest_framework.views import APIView
+import logging
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_protect
+from rest_framework import generics, status
+from rest_framework.exceptions import APIException, ValidationError
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
-from django.shortcuts import get_object_or_404
-from crops.models import Crop
-from .models import Diagnosis, Feedback
-from .serializers import DiagnosisSerializer, FeedbackSerializer
-from .services import create_diagnosis_session, process_diagnosis_images, execute_diagnosis_pipeline
+from rest_framework.views import APIView
+from .access import accessible_diagnoses, get_accessible_diagnosis
+from .models import Feedback
+from .serializers import DiagnosisSerializer, FeedbackSerializer, FeedbackInputSerializer
+from .submission import submit_diagnosis
 
+logger = logging.getLogger(__name__)
+
+
+@method_decorator(csrf_protect, name='dispatch')
 class DiagnosisCreateAPIView(APIView):
+    parser_classes = [MultiPartParser, FormParser]
+    throttle_scope = 'diagnosis'
+
     def post(self, request):
-        crop_id = request.data.get('crop_id')
-        if not crop_id:
-            return Response({'error': 'crop_id is required'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        crop = get_object_or_404(Crop, id=crop_id)
-        diagnosis = create_diagnosis_session(crop=crop, user=request.user)
+        try:
+            diagnosis = submit_diagnosis(request, request.data, request.FILES)
+        except (ValidationError, APIException):
+            raise
+        except Exception:
+            logger.exception('Assessment submission failed')
+            return Response({'error': 'We could not complete the assessment. Your photos are still selected; please retry.'}, status=503)
+        return Response(DiagnosisSerializer(diagnosis, context={'request': request}).data, status=status.HTTP_201_CREATED)
 
-        # Collect images
-        image_files = []
-        for key in request.FILES:
-            if key.startswith('image'):
-                image_files.append(request.FILES[key])
-
-        if image_files:
-            process_diagnosis_images(diagnosis, image_files)
-
-        answers_data = {
-            'first_noticed': request.data.get('first_noticed', 'Today'),
-            'affected_parts': request.data.getlist('affected_parts') if hasattr(request.data, 'getlist') else request.data.get('affected_parts', []),
-            'visible_symptoms': request.data.getlist('visible_symptoms') if hasattr(request.data, 'getlist') else request.data.get('visible_symptoms', []),
-            'is_spreading': request.data.get('is_spreading', 'Not sure'),
-            'weather_condition': request.data.get('weather_condition', 'Humid'),
-            'treatment_applied': request.data.get('treatment_applied', 'No'),
-            'treatment_details': request.data.get('treatment_details', ''),
-        }
-
-        execute_diagnosis_pipeline(diagnosis, answers_data)
-
-        serializer = DiagnosisSerializer(diagnosis)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class DiagnosisDetailAPIView(generics.RetrieveAPIView):
     serializer_class = DiagnosisSerializer
 
     def get_queryset(self):
-        return Diagnosis.objects.all()
+        return accessible_diagnoses(self.request)
 
-class FeedbackCreateAPIView(generics.CreateAPIView):
-    serializer_class = FeedbackSerializer
 
-    def get_queryset(self):
-        return Feedback.objects.all()
+@method_decorator(csrf_protect, name='dispatch')
+class FeedbackCreateAPIView(APIView):
+    throttle_scope = 'feedback'
+
+    def post(self, request):
+        from rest_framework import serializers
+        identifier = serializers.UUIDField().run_validation(request.data.get('diagnosis'))
+        diagnosis = get_accessible_diagnosis(request, identifier)
+        serializer = FeedbackInputSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        feedback, created = Feedback.objects.update_or_create(diagnosis=diagnosis, defaults=serializer.validated_data)
+        return Response(FeedbackSerializer(feedback).data, status=201 if created else 200)

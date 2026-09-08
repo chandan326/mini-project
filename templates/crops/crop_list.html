@@ -25,7 +25,7 @@
               <i class="fas fa-stethoscope me-1"></i> Check {{ crop.name }}
             </a>
             <a href="{% url 'crop_detail' slug=crop.slug %}" class="btn btn-agri-outline btn-sm w-100">
-              View Diseases ({{ crop.diseases.count }})
+              View Diseases ({{ crop.disease_count }})
             </a>
           </div>
         </div>

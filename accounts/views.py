@@ -6,6 +6,9 @@ from django.contrib import messages
 from .forms import FarmerRegistrationForm
 from .models import FarmerProfile
 from diagnosis.models import Diagnosis
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.http import require_POST
+from django.db import transaction
 
 def register_view(request):
     if request.user.is_authenticated:
@@ -16,14 +19,15 @@ def register_view(request):
         if form.is_valid():
             user = form.save(commit=False)
             user.set_password(form.cleaned_data['password'])
-            user.save()
+            with transaction.atomic():
+                user.save()
+                FarmerProfile.objects.create(
+                    user=user,
+                    phone_number=form.cleaned_data.get('phone_number'),
+                    location_region=form.cleaned_data.get('location_region')
+                )
 
-            FarmerProfile.objects.create(
-                user=user,
-                phone_number=form.cleaned_data.get('phone_number'),
-                location_region=form.cleaned_data.get('location_region')
-            )
-
+            Diagnosis.objects.filter(id__in=request.session.get('diagnosis_ids', []), user__isnull=True).update(user=user)
             login(request, user)
             messages.success(request, f"Welcome to AgriHealth AI, {user.first_name or user.username}!")
             return redirect('dashboard')
@@ -40,9 +44,12 @@ def login_view(request):
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
+            Diagnosis.objects.filter(id__in=request.session.get('diagnosis_ids', []), user__isnull=True).update(user=user)
             login(request, user)
             messages.success(request, f"Signed in successfully as {user.username}.")
-            next_url = request.GET.get('next') or 'dashboard'
+            next_url = request.POST.get('next') or request.GET.get('next') or 'dashboard'
+            if not url_has_allowed_host_and_scheme(next_url, {request.get_host()}, require_https=request.is_secure()):
+                next_url = 'dashboard'
             return redirect(next_url)
         else:
             messages.error(request, "Invalid username or password.")
@@ -51,6 +58,7 @@ def login_view(request):
 
     return render(request, 'accounts/login.html', {'form': form})
 
+@require_POST
 def logout_view(request):
     logout(request)
     messages.info(request, "You have logged out.")
@@ -63,7 +71,7 @@ def dashboard_view(request):
     
     total_count = user_diagnoses.count()
     low_risk_count = user_diagnoses.filter(predicted_disease__severity='LOW').count()
-    disease_count = user_diagnoses.exclude(predicted_disease__severity='LOW').count()
+    disease_count = user_diagnoses.filter(status='COMPLETED', is_low_confidence=False, predicted_disease__isnull=False).exclude(predicted_disease__severity='LOW').count()
     recent_diagnoses = user_diagnoses[:10]
 
     context = {

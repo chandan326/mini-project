@@ -24,8 +24,10 @@
       </div>
     </div>
 
+    {% if diagnosis.is_demo %}<div class="alert alert-info" role="status"><strong>Demo assessment.</strong> Your photos were processed and saved, but no live image model is enabled. This report does not identify a plant disease.</div>{% endif %}
+    <div class="agri-card p-3 mb-4"><h5 class="fw-bold">Your plant photos</h5><div class="photo-grid">{% for photo in diagnosis.images.all %}<div class="photo-card"><img src="{% url 'diagnosis_image' pk=diagnosis.id image_id=photo.id %}" alt="Submitted plant photo {{ photo.slot_number }}" loading="lazy" decoding="async"><span class="photo-caption">Photo {{ photo.slot_number }}{% if photo.quality_warning %} · {{ photo.quality_warning }}{% endif %}</span></div>{% endfor %}</div></div>
     <!-- Low Confidence / Discrepancy Warning Box -->
-    {% if diagnosis.is_low_confidence or diagnosis.is_inconsistent %}
+    {% if not diagnosis.is_demo %}{% if diagnosis.is_low_confidence or diagnosis.is_inconsistent %}
       <div class="p-4 bg-warning-subtle text-dark rounded-4 border border-warning mb-4 shadow-sm">
         <div class="d-flex align-items-start gap-3">
           <i class="fas fa-exclamation-triangle fa-2x text-warning flex-shrink-0 mt-1"></i>
@@ -35,7 +37,7 @@
               {% if diagnosis.is_inconsistent %}
                 Different photos produced inconsistent visual patterns.
               {% else %}
-                The confidence score ({{ diagnosis.confidence_pct }}%) is below our reliable threshold (60%).
+                The confidence score ({{ diagnosis.confidence_pct }}%) is below our reliable threshold ({{ CONFIDENCE_THRESHOLD_PCT }}%).
               {% endif %}
               To protect your crop, we do not present uncertain predictions as guaranteed diagnoses.
             </p>
@@ -52,6 +54,7 @@
       </div>
     {% endif %}
 
+    {% endif %}
     <!-- Assessment Summary Card -->
     <div class="agri-card p-4 p-md-5 mb-4 shadow-sm border-2 border-success-subtle">
       <div class="row align-items-center g-4">
@@ -86,8 +89,8 @@
         <div class="col-md-5">
           <!-- Confidence Gauge / Progress Bar -->
           <div class="p-3 bg-light rounded-4 text-center border">
-            <small class="fw-bold text-muted d-block mb-1">AI Ensemble Confidence Score</small>
-            <div class="display-5 fw-bold text-success mb-2">{{ diagnosis.confidence_pct }}%</div>
+            <small class="fw-bold text-muted d-block mb-1">Model confidence (not measured accuracy)</small>
+            <div class="display-5 fw-bold text-success mb-2">{% if diagnosis.is_demo %}N/A{% else %}{{ diagnosis.confidence_pct }}%{% endif %}</div>
             
             <div class="progress progress-agri mb-2">
               <div class="progress-bar progress-bar-agri" role="progressbar" style="width: {{ diagnosis.confidence_pct }}%;" aria-valuenow="{{ diagnosis.confidence_pct }}" aria-valuemin="0" aria-valuemax="100"></div>
@@ -95,11 +98,11 @@
             
             <small class="text-muted">
               {% if diagnosis.confidence_pct >= 80 %}
-                High agreement across uploaded images
+                Model-reported estimate; verify with an expert
               {% elif diagnosis.confidence_pct >= 60 %}
-                Moderate agreement with reported symptoms
+                Model-reported estimate; verify with an expert
               {% else %}
-                Low confidence threshold flag active
+                No reliable disease identification
               {% endif %}
             </small>
           </div>
@@ -190,16 +193,16 @@
         <p class="text-dark mb-0">{{ knowledge.monitoring_guidance }}</p>
       </div>
     {% else %}
-      <div class="agri-card p-4 mb-4">
+      <div class="agri-card p-4 mb-4" id="expertHelp">
         <h4 class="fw-bold text-success mb-3">General Crop Care Advice</h4>
-        <p class="text-muted">Ensure adequate plant spacing, avoid prolonged leaf wetness, remove severely infected leaves, and monitor field progression daily.</p>
+        <p class="text-muted">Monitor the plant and contact a local agricultural extension expert if symptoms spread or worsen. Take additional clear photos to document changes.</p>
       </div>
     {% endif %}
 
     <!-- Was This Result Helpful? Feedback Section -->
     <div class="agri-card p-4 mb-4 bg-light text-center" id="feedbackContainer">
       <h5 class="fw-bold text-dark mb-2">Was this result helpful?</h5>
-      <p class="text-muted small mb-3">Your feedback helps improve our AI model for all farmers.</p>
+      <p class="text-muted small mb-3">Your feedback helps us improve this assessment workflow.</p>
 
       {% if has_feedback %}
         <div class="alert alert-success d-inline-block px-4 py-2 mb-0 rounded-pill">
@@ -227,7 +230,7 @@
                 <option value="Image upload problem">Image quality issue</option>
                 <option value="Other">Other reason</option>
               </select>
-              <textarea name="comments" class="form-control form-control-sm mb-3" rows="2" placeholder="Additional comments (optional)..."></textarea>
+              <textarea name="comments" class="form-control form-control-sm mb-3" maxlength="2000" rows="2" placeholder="Additional comments (optional)..."></textarea>
               <button type="submit" name="is_helpful" value="false" class="btn btn-sm btn-danger rounded-pill fw-bold">
                 Submit Feedback
               </button>

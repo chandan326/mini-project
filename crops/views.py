@@ -2,9 +2,10 @@ from django.shortcuts import render, get_object_or_404
 from rest_framework import generics
 from .models import Crop
 from .serializers import CropSerializer
+from django.db.models import Count, Q
 
 def crop_list_view(request):
-    crops = Crop.objects.filter(is_active=True)
+    crops = Crop.objects.filter(is_active=True).annotate(disease_count=Count('diseases', filter=Q(diseases__active=True)))
     return render(request, 'crops/crop_list.html', {'crops': crops})
 
 def crop_detail_view(request, slug):

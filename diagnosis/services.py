@@ -1,111 +1,54 @@
 from django.conf import settings
 from .models import Diagnosis, DiagnosisImage, DiagnosisAnswer
 from ml_model.model_loader import get_predictor
-from knowledge_base.services import get_disease_knowledge, format_natural_explanation
+from ml_model.gemini import analyze_images
+
 
 def create_diagnosis_session(crop, user=None):
-    """Initializes a new diagnosis session."""
-    diagnosis = Diagnosis.objects.create(
-        crop=crop,
-        user=user if user and user.is_authenticated else None,
-        status='PROCESSING'
+    return Diagnosis.objects.create(
+        crop=crop, user=user if user and user.is_authenticated else None,
+        status='PROCESSING', image_retention_status='STORED_WITH_USER_PERMISSION',
     )
-    return diagnosis
+
 
 def process_diagnosis_images(diagnosis, image_files):
-    """
-    Saves uploaded images (up to 5) and runs preprocessing quality checks.
-    """
     predictor = get_predictor()
-    saved_images = []
+    saved = []
+    for index, file_obj in enumerate(image_files, 1):
+        validation = predictor.preprocess(file_obj)
+        file_obj.seek(0)
+        item = DiagnosisImage(diagnosis=diagnosis, slot_number=index,
+                              is_valid=validation['is_valid'], quality_warning=validation.get('warning'))
+        try:
+            item.image.save(file_obj.name, file_obj, save=False)
+            item.save()
+        except Exception:
+            if item.image.name:
+                try:
+                    item.image.delete(save=False)
+                except Exception:
+                    pass
+            raise
+        # Reuse normalized upload bytes instead of downloading every image again.
+        file_obj.seek(0)
+        item._source_file = file_obj
+        saved.append(item)
+    return saved
 
-    for index, file_obj in enumerate(image_files[:getattr(settings, 'MAX_DIAGNOSIS_IMAGES', 5)], start=1):
-        # Preprocess & inspect image
-        val_res = predictor.preprocess(file_obj)
-        
-        diag_img = DiagnosisImage.objects.create(
-            diagnosis=diagnosis,
-            slot_number=index,
-            image=file_obj,
-            is_valid=val_res['is_valid'],
-            quality_warning=val_res.get('warning')
-        )
-        saved_images.append(diag_img)
-    return saved_images
 
-def execute_diagnosis_pipeline(diagnosis, answers_data):
-    """
-    Executes full AI inference pipeline:
-    1. Single image ML predictions.
-    2. Ensemble aggregation.
-    3. Questionnaire correlation.
-    4. Verified Knowledge Base retrieval.
-    5. Natural explanation generation.
-    """
-    predictor = get_predictor()
-    diag_images = diagnosis.images.all()
-
-    # Step 1: Run ML prediction per image
-    image_results = []
-    for diag_img in diag_images:
-        if not diag_img.is_valid:
-            image_results.append({'is_valid': False, 'warning': diag_img.quality_warning, 'probabilities': {}})
-            continue
-
-        res = predictor.predict_single(diag_img.image, diagnosis.crop)
-        diag_img.prediction_prob = res.get('probabilities', {})
-        if res.get('warning'):
-            diag_img.quality_warning = res.get('warning')
-        diag_img.save()
-        image_results.append(res)
-
-    # Save answers data
-    vis_symptoms = answers_data.get('visible_symptoms', [])
-    aff_parts = answers_data.get('affected_parts', [])
-
-    DiagnosisAnswer.objects.update_or_create(
-        diagnosis=diagnosis,
-        defaults={
-            'first_noticed': answers_data.get('first_noticed', 'Today'),
-            'affected_parts': aff_parts,
-            'visible_symptoms': vis_symptoms,
-            'is_spreading': answers_data.get('is_spreading', 'Not sure'),
-            'weather_condition': answers_data.get('weather_condition', 'Humid'),
-            'treatment_applied': answers_data.get('treatment_applied', 'No'),
-            'treatment_details': answers_data.get('treatment_details', ''),
-        }
-    )
-
-    formatted_answers = {
-        'first_noticed_text': answers_data.get('first_noticed', 'recently'),
-        'visible_symptoms_text': ', '.join(vis_symptoms) if vis_symptoms else 'observed abnormalities',
-        'weather_condition': answers_data.get('weather_condition', 'humid weather'),
-    }
-
-    # Step 2: Ensemble Aggregation
-    agg_res = predictor.aggregate_predictions(image_results, diagnosis.crop, answers_data)
-
-    predicted_disease = agg_res['predicted_disease']
-    confidence = agg_res['confidence']
-    is_low_confidence = agg_res['is_low_confidence']
-    is_inconsistent = agg_res['is_inconsistent']
-
-    # Step 3: Format Explanation
-    explanation = format_natural_explanation(
-        crop_name=diagnosis.crop.name,
-        disease_name=predicted_disease.name if predicted_disease else 'Unknown Issue',
-        answers=formatted_answers,
-        confidence_pct=int(confidence * 100),
-        is_low_confidence=is_low_confidence
-    )
-
-    # Step 4: Finalize Diagnosis Record
-    diagnosis.predicted_disease = predicted_disease
-    diagnosis.confidence_score = confidence
-    diagnosis.is_low_confidence = is_low_confidence
-    diagnosis.is_inconsistent = is_inconsistent
-    diagnosis.explanation = explanation
+def execute_diagnosis_pipeline(diagnosis, answers_data, saved_images=None):
+    items = saved_images if saved_images is not None else list(diagnosis.images.all())
+    inputs = [getattr(item, '_source_file', item.image) for item in items]
+    if settings.DEMO_MODE:
+        result = get_predictor().aggregate_predictions([], diagnosis.crop, answers_data)
+    else:
+        result = analyze_images(inputs, diagnosis.crop, answers_data)
+    DiagnosisAnswer.objects.update_or_create(diagnosis=diagnosis, defaults=answers_data)
+    diagnosis.predicted_disease = result['predicted_disease']
+    diagnosis.confidence_score = result['confidence']
+    diagnosis.is_low_confidence = result['is_low_confidence']
+    diagnosis.is_inconsistent = result['is_inconsistent']
+    diagnosis.explanation = result['explanation']
     diagnosis.status = 'COMPLETED'
     diagnosis.save()
-
     return diagnosis
