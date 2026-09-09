@@ -20,6 +20,17 @@ def plant_image(name='plant.jpg', size=(400, 300), color='green'):
 
 
 def gemini_response(output, finish='STOP'):
+    output = dict(output)
+    if 'disease_id' in output:
+        output['catalog_disease_id'] = output.pop('disease_id')
+    defaults = {
+        'catalog_disease_id': 0, 'condition_name': 'Early Blight', 'scientific_name': 'Alternaria solani',
+        'category': 'disease', 'observed_signs': ['Brown leaf spots'], 'likely_cause': 'Possible fungal infection',
+        'immediate_steps': ['Separate badly affected leaves and monitor the plant'],
+        'prevention_steps': ['Keep foliage dry and improve airflow'],
+        'when_to_seek_help': 'Contact a local agricultural officer if symptoms spread.',
+    }
+    output = {**defaults, **output}
     provider = Mock(status_code=200)
     provider.json.return_value = {'candidates': [{'finishReason': finish, 'content': {'parts': [{'text': json.dumps(output)}]}}]}
     return provider
@@ -223,14 +234,38 @@ class DiagnosisFlowTest(TestCase):
         self.assertFalse(DiagnosisImage.objects.exists())
 
     def test_unknown_assessment_has_no_forced_disease_or_treatment(self):
-        provider = gemini_response({'disease_id': 0, 'confidence': .95, 'contains_plant': True, 'inconsistent': False, 'explanation': 'No identifiable disease.'})
+        provider = gemini_response({'disease_id': 0, 'condition_name': 'Unknown condition', 'scientific_name': '', 'category': 'unknown', 'confidence': .95, 'contains_plant': True, 'inconsistent': False, 'explanation': 'No identifiable disease.'})
         with override_settings(DEMO_MODE=False, GEMINI_API_KEY='test-only'):
             with patch('ml_model.gemini.requests.post', return_value=provider):
                 response = self.submit()
         self.assertEqual(response.status_code, 201)
         self.assertIsNone(response.json()['predicted_disease'])
-        self.assertEqual(response.json()['confidence_score'], 0)
+        self.assertEqual(response.json()['confidence_score'], .95)
         self.assertTrue(Diagnosis.objects.get().is_low_confidence)
+
+    def test_live_assessment_can_identify_condition_outside_local_catalog(self):
+        provider = gemini_response({
+            'disease_id': 0, 'condition_name': 'Bacterial wilt', 'scientific_name': 'Ralstonia solanacearum',
+            'category': 'disease', 'confidence': .84, 'contains_plant': True, 'inconsistent': False,
+            'observed_signs': ['Rapid wilting while leaves remain green'], 'likely_cause': 'A possible soil-borne bacterial infection',
+            'immediate_steps': ['Isolate the affected plant and avoid moving its soil'],
+            'prevention_steps': ['Clean tools after handling the affected plant'],
+            'when_to_seek_help': 'Ask a local agricultural officer to confirm before treatment.',
+            'explanation': 'The visible wilt pattern may fit bacterial wilt, but field confirmation is needed.'
+        })
+        with override_settings(DEMO_MODE=False, GEMINI_API_KEY='test-only'):
+            with patch('ml_model.gemini.requests.post', return_value=provider):
+                response = self.submit()
+        self.assertEqual(response.status_code, 201, response.content)
+        data = response.json()
+        self.assertIsNone(data['predicted_disease'])
+        self.assertEqual(data['assessed_condition'], 'Bacterial wilt')
+        self.assertEqual(data['ai_assessment']['category'], 'disease')
+        self.assertFalse(data['is_low_confidence'])
+        result = self.client.get(data['result_url'])
+        self.assertContains(result, 'Bacterial wilt')
+        self.assertContains(result, 'A possible soil-borne bacterial infection')
+        self.assertEqual(self.client.get(f"/api/reports/{data['id']}/").status_code, 200)
 
     def test_configured_live_mode_removes_unavailable_banner(self):
         with override_settings(DEMO_MODE=False, GEMINI_API_KEY='test-only', ENABLE_AI_GENERATION=True, AI_PROVIDER='gemini', GEMINI_TIMEOUT_SECONDS=60):

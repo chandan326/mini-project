@@ -28,6 +28,7 @@ class Diagnosis(models.Model):
     is_low_confidence = models.BooleanField(default=False)
     is_inconsistent = models.BooleanField(default=False)
     explanation = models.TextField(blank=True)
+    ai_assessment = models.JSONField(default=dict, blank=True)
     image_retention_status = models.CharField(max_length=40, choices=RETENTION_CHOICES, default='PROCESSED')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -52,6 +53,12 @@ class Diagnosis(models.Model):
     @property
     def is_demo(self):
         return self.analysis_method == 'demo'
+
+    @property
+    def assessed_condition(self):
+        if self.predicted_disease:
+            return self.predicted_disease.name
+        return self.ai_assessment.get('condition_name') or 'Uncertain / Unconfirmed Symptom'
 
 class DiagnosisImage(models.Model):
     diagnosis = models.ForeignKey(Diagnosis, on_delete=models.CASCADE, related_name='images')

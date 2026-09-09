@@ -9,6 +9,7 @@ from diagnosis.models import Diagnosis
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 from django.db import transaction
+from django.db.models import Q
 
 def register_view(request):
     if request.user.is_authenticated:
@@ -71,7 +72,9 @@ def dashboard_view(request):
     
     total_count = user_diagnoses.count()
     low_risk_count = user_diagnoses.filter(predicted_disease__severity='LOW').count()
-    disease_count = user_diagnoses.filter(status='COMPLETED', is_low_confidence=False, predicted_disease__isnull=False).exclude(predicted_disease__severity='LOW').count()
+    disease_count = user_diagnoses.filter(status='COMPLETED', is_low_confidence=False).filter(
+        Q(predicted_disease__isnull=False) | Q(ai_assessment__category__in=['disease', 'pest', 'nutrient', 'environmental'])
+    ).exclude(predicted_disease__severity='LOW').count()
     recent_diagnoses = user_diagnoses[:10]
 
     context = {

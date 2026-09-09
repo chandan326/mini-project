@@ -49,6 +49,7 @@ def execute_diagnosis_pipeline(diagnosis, answers_data, saved_images=None):
     diagnosis.is_low_confidence = result['is_low_confidence']
     diagnosis.is_inconsistent = result['is_inconsistent']
     diagnosis.explanation = result['explanation']
+    diagnosis.ai_assessment = result.get('ai_assessment', {})
     diagnosis.status = 'COMPLETED'
     diagnosis.save()
     return diagnosis

@@ -65,7 +65,7 @@ class DiagnosisSerializer(serializers.ModelSerializer):
             'id', 'crop', 'status', 'predicted_disease', 'confidence_score',
             'confidence_pct', 'is_low_confidence', 'is_inconsistent',
             'explanation', 'image_retention_status', 'created_at', 'images', 'answers',
-            'analysis_method', 'result_url'
+            'analysis_method', 'ai_assessment', 'assessed_condition', 'result_url'
         ]
 
 class FeedbackSerializer(serializers.ModelSerializer):

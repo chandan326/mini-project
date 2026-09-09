@@ -61,8 +61,8 @@
         <div class="col-md-7">
           <small class="text-uppercase fw-bold text-success tracking-wide">Assessed Condition</small>
           <h2 class="fw-bold text-dark mt-1 mb-2">
-            {% if disease and not diagnosis.is_low_confidence %}
-              {{ disease.name }}
+            {% if not diagnosis.is_demo %}
+              {{ diagnosis.assessed_condition }}
               {% if disease.name_hi %}<span class="fs-5 text-muted">({{ disease.name_hi }})</span>{% endif %}
             {% else %}
               Uncertain / Unconfirmed Symptom
@@ -71,13 +71,15 @@
           
           <p class="text-muted small mb-3">
             <i class="fas fa-seedling text-success me-1"></i> Crop: <strong>{{ diagnosis.crop.name }}</strong>
-            {% if disease and disease.scientific_name %} | <em>{{ disease.scientific_name }}</em>{% endif %}
+            {% if disease and disease.scientific_name %} | <em>{{ disease.scientific_name }}</em>{% elif diagnosis.ai_assessment.scientific_name %} | <em>{{ diagnosis.ai_assessment.scientific_name }}</em>{% endif %}
           </p>
 
           <div class="d-flex align-items-center gap-2 mb-2">
             <span class="fw-bold text-dark">Status:</span>
             {% if diagnosis.is_low_confidence %}
               <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fs-6">Unable to determine with certainty</span>
+            {% elif diagnosis.ai_assessment.category == 'healthy' %}
+              <span class="badge bg-success text-white px-3 py-2 rounded-pill fs-6">No obvious disease visible</span>
             {% elif disease and disease.severity == 'HIGH' %}
               <span class="badge bg-danger text-white px-3 py-2 rounded-pill fs-6">Likely Affected - Severe Risk</span>
             {% else %}
@@ -149,6 +151,12 @@
               </ul>
             </div>
           {% endfor %}
+        {% elif diagnosis.ai_assessment.observed_signs %}
+          {% for sign in diagnosis.ai_assessment.observed_signs %}
+            <div class="col-md-4 col-sm-6"><div class="p-3 bg-light rounded-3 border h-100"><i class="fas fa-leaf text-success me-2"></i>{{ sign }}</div></div>
+          {% endfor %}
+        {% else %}
+          <div class="col-12 text-muted">No specific visible signs could be identified from these photos.</div>
         {% endif %}
       </div>
     </div>
@@ -191,6 +199,19 @@
           <i class="fas fa-user-md me-2"></i> When to Seek Agricultural Expert Assistance
         </h4>
         <p class="text-dark mb-0">{{ knowledge.monitoring_guidance }}</p>
+      </div>
+    {% elif diagnosis.ai_assessment %}
+      <div class="agri-card p-4 mb-4 border-start border-4 border-success">
+        <h4 class="fw-bold text-success mb-3">Possible Cause</h4>
+        <p>{{ diagnosis.ai_assessment.likely_cause|default:"The cause could not be determined from photos alone." }}</p>
+        <h5 class="fw-bold mt-4">Safe Immediate Steps</h5>
+        <ul>{% for step in diagnosis.ai_assessment.immediate_steps %}<li class="mb-2">{{ step }}</li>{% empty %}<li>Monitor the plant and take clearer photos if symptoms change.</li>{% endfor %}</ul>
+        <h5 class="fw-bold mt-4">Prevention and Monitoring</h5>
+        <ul>{% for step in diagnosis.ai_assessment.prevention_steps %}<li class="mb-2">{{ step }}</li>{% empty %}<li>Keep the growing area clean and monitor nearby plants.</li>{% endfor %}</ul>
+      </div>
+      <div class="agri-card p-4 mb-4" id="expertHelp">
+        <h4 class="fw-bold text-success mb-3">When to Seek Agricultural Expert Assistance</h4>
+        <p class="text-dark mb-0">{{ diagnosis.ai_assessment.when_to_seek_help|default:"Contact a local agricultural officer if symptoms spread, the plant deteriorates, or treatment decisions are needed." }}</p>
       </div>
     {% else %}
       <div class="agri-card p-4 mb-4" id="expertHelp">

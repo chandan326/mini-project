@@ -12,9 +12,9 @@ class DiagnosisAnswerInline(admin.StackedInline):
 
 @admin.register(Diagnosis)
 class DiagnosisAdmin(admin.ModelAdmin):
-    list_display = ('id', 'crop', 'predicted_disease', 'confidence_score_display', 'is_low_confidence', 'is_inconsistent', 'image_retention_status', 'created_at')
+    list_display = ('id', 'crop', 'assessed_condition', 'confidence_score_display', 'is_low_confidence', 'is_inconsistent', 'image_retention_status', 'created_at')
     list_filter = ('crop', 'status', 'is_low_confidence', 'is_inconsistent', 'image_retention_status', 'created_at')
-    search_fields = ('id', 'crop__name', 'predicted_disease__name')
+    search_fields = ('id', 'crop__name', 'predicted_disease__name', 'ai_assessment__condition_name')
     readonly_fields = ('id', 'created_at', 'updated_at')
     inlines = [DiagnosisImageInline, DiagnosisAnswerInline]
 

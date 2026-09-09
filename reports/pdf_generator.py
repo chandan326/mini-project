@@ -32,12 +32,13 @@ def generate_diagnosis_pdf(diagnosis):
     story = [paragraph('AgriHealth AI', 'Title'), paragraph('Plant Health Assessment Report', 'Heading2'),
              paragraph(f'Report: {diagnosis.id}\nDate: {diagnosis.created_at:%d %B %Y}'),
              HRFlowable(width='100%', color=colors.HexColor('#1e5631')), Spacer(1, 12)]
-    confirmed = not diagnosis.is_demo and not diagnosis.is_low_confidence and diagnosis.predicted_disease
+    confirmed = not diagnosis.is_demo and not diagnosis.is_low_confidence
     disease = diagnosis.predicted_disease if confirmed else None
+    assessment = diagnosis.ai_assessment or {}
     summary = [
         ['Crop', diagnosis.crop.name],
         ['Analysis', 'Demo workflow - no disease prediction' if diagnosis.is_demo else 'AI-assisted image assessment'],
-        ['Assessed condition', disease.name if disease else 'Unconfirmed - expert assessment recommended'],
+        ['Assessed condition', diagnosis.assessed_condition if confirmed else 'Unconfirmed - expert assessment recommended'],
         ['Model confidence', 'Not applicable in demo mode' if diagnosis.is_demo else f'{diagnosis.confidence_pct}% (not measured accuracy)'],
     ]
     table = Table([[paragraph(label), paragraph(value)] for label, value in summary], colWidths=[125, doc.width - 125])
@@ -81,6 +82,11 @@ def generate_diagnosis_pdf(diagnosis):
     if knowledge:
         for title, text in [('Immediate field care', knowledge.treatment_immediate), ('Crop management', knowledge.treatment_management), ('Prevention', knowledge.prevention_methods), ('Monitoring', knowledge.monitoring_guidance)]:
             story.extend([paragraph(title, 'Heading2'), paragraph(text)])
+    elif assessment:
+        story.extend([paragraph('Possible cause', 'Heading2'), paragraph(assessment.get('likely_cause') or 'The cause could not be determined from photos alone.')])
+        for title, values in [('Safe immediate steps', assessment.get('immediate_steps', [])), ('Prevention and monitoring', assessment.get('prevention_steps', []))]:
+            story.extend([paragraph(title, 'Heading2'), paragraph('\n'.join(f'• {value}' for value in values) or 'Monitor the plant and consult a local agricultural officer if symptoms change.')])
+        story.extend([paragraph('When to seek expert help', 'Heading2'), paragraph(assessment.get('when_to_seek_help') or 'Seek local agricultural advice if symptoms spread or treatment decisions are needed.')])
     else:
         story.extend([paragraph('Next steps', 'Heading2'), paragraph('Monitor changes, take clear plant photos in natural light, and contact a local agricultural extension expert if symptoms spread or the plant deteriorates. A demo or uncertain result cannot identify a disease.')])
     story.extend([Spacer(1, 12), HRFlowable(width='100%', color=colors.lightgrey), paragraph('AI-assisted information is not a confirmed plant diagnosis. Verify findings with an agricultural expert before choosing treatment.')])

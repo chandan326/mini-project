@@ -2,6 +2,7 @@ from django.core.management.base import BaseCommand
 from crops.models import Crop
 from diseases.models import Disease, Symptom, DiseaseSymptom
 from knowledge_base.models import KnowledgeSource
+from crops.catalog import INDIA_MAJOR_CROPS
 
 class Command(BaseCommand):
     help = 'Seeds database with default crops, symptoms, diseases, and verified knowledge base records.'
@@ -27,20 +28,11 @@ class Command(BaseCommand):
             symptom_objs[s_data['code']] = sym
 
         # 2. Seed Crops
-        crops_data = [
-            {'name': 'Tomato', 'name_hi': 'टमाटर', 'scientific_name': 'Solanum lycopersicum', 'icon_class': 'fa-pepper-hot', 'description': 'Trained for Leaf Blight, Leaf Curl Virus, and Bacterial Spot.'},
-            {'name': 'Potato', 'name_hi': 'आलू', 'scientific_name': 'Solanum tuberosum', 'icon_class': 'fa-egg', 'description': 'Trained for Early and Late Blight detection.'},
-            {'name': 'Rice', 'name_hi': 'चावल', 'scientific_name': 'Oryza sativa', 'icon_class': 'fa-bowl-rice', 'description': 'Trained for Rice Blast and Bacterial Leaf Blight.'},
-            {'name': 'Wheat', 'name_hi': 'गेहूं', 'scientific_name': 'Triticum aestivum', 'icon_class': 'fa-wheat-awn', 'description': 'Trained for Yellow Rust and Powdery Mildew.'},
-            {'name': 'Maize', 'name_hi': 'मक्का', 'scientific_name': 'Zea mays', 'icon_class': 'fa-plant-wilt', 'description': 'Trained for Northern Leaf Blight and Common Rust.'},
-            {'name': 'Cotton', 'name_hi': 'कपास', 'scientific_name': 'Gossypium', 'icon_class': 'fa-feather-alt', 'description': 'Trained for Cotton Leaf Curl Virus and Wilt.'},
-            {'name': 'Chilli', 'name_hi': 'मिर्च', 'scientific_name': 'Capsicum annuum', 'icon_class': 'fa-pepper-hot', 'description': 'Trained for Chilli Anthracnose and Leaf Curl.'},
-            {'name': 'Apple', 'name_hi': 'सेब', 'scientific_name': 'Malus domestica', 'icon_class': 'fa-apple-whole', 'description': 'Trained for Apple Scab and Black Rot.'},
-        ]
+        crops_data = INDIA_MAJOR_CROPS
 
         crop_objs = {}
         for c_data in crops_data:
-            crop, _ = Crop.objects.get_or_create(name=c_data['name'], defaults=c_data)
+            crop, _ = Crop.objects.update_or_create(name=c_data['name'], defaults=c_data)
             crop_objs[c_data['name']] = crop
 
         # 3. Seed Diseases & Knowledge Sources

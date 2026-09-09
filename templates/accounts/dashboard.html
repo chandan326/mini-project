@@ -77,8 +77,8 @@
               <td>{{ diag.created_at|date:"M d, Y" }}</td>
               <td><span class="fw-bold text-dark">{{ diag.crop.name }}</span></td>
               <td>
-                {% if diag.predicted_disease and not diag.is_low_confidence %}
-                  {{ diag.predicted_disease.name }}
+                {% if not diag.is_demo %}
+                  {{ diag.assessed_condition }}
                 {% else %}
                   <span class="text-muted">Uncertain / Unconfirmed</span>
                 {% endif %}

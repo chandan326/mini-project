@@ -5,6 +5,7 @@ Django 5.2 plant assessment app in `chandan326/mini-project`, deployed as Vercel
 ## Photo workflow
 
 - Select a crop, add **1-5 photos** from the gallery, drag and drop, or use the camera.
+- The scanner includes 30 widely grown Indian field and horticultural crops, with English and Hindi names. Re-running `python manage.py seed_data` safely adds or updates the full list.
 - Live camera preview supports capture, switch camera and close; a device-camera picker is also available. Camera access requires HTTPS (localhost is supported for development) and browser permission.
 - Add and remove photos before submitting. Originals up to 20 MB are resized to at most 1600 pixels and compressed before upload. JPG, PNG and WebP are supported; convert HEIC first.
 - Server validation requires a readable image at least 200 x 200 pixels, checks the combined 4 MB request limit, normalizes orientation and removes metadata before saving.
@@ -15,7 +16,7 @@ Django 5.2 plant assessment app in `chandan326/mini-project`, deployed as Vercel
 
 `DEMO_MODE=True` exercises upload, questionnaire, storage, feedback and PDF generation. It **does not identify disease** and returns no invented disease probabilities. Existing reports from the original random predictor are treated as demo reports.
 
-For live image analysis, set `DEMO_MODE=False`, `GEMINI_API_KEY` and optionally `GEMINI_MODEL` (default `gemini-3.1-flash-lite`). The server sends all selected photos and questionnaire in one Gemini `generateContent` API request. Structured output is validated against the selected crop's disease catalog. Unknown or uncertain conditions are never forced into a catalog disease. Provider errors return HTTP 503; they never silently produce a demo diagnosis. The model's confidence is not measured diagnostic accuracy. This integration needs a working account/key and live verification before real-world use.
+For live image analysis, set `DEMO_MODE=False`, `GEMINI_API_KEY` and optionally `GEMINI_MODEL` (default `gemini-3.1-flash-lite`). The server sends all selected photos and questionnaire in one Gemini `generateContent` API request. Gemini can return a structured disease, pest, nutrient issue, environmental stress, healthy state, or unknown result even when the condition is absent from the local disease catalog. A local disease ID is accepted only for an exact match, and unknown or uncertain conditions are never forced into the catalog. Provider errors return HTTP 503; they never silently produce a demo diagnosis. The model's confidence is not measured diagnostic accuracy. This integration needs a working account/key and live verification before real-world use.
 
 Live deployment settings (set the key only as a server-side secret):
 
@@ -32,7 +33,7 @@ DEMO_MODE=false
 
 Authentication, model-access and quota errors receive clear messages without returning provider response bodies or credentials. Incomplete, blocked or malformed AI responses never produce a completed report. The app does not retry provider requests automatically, avoiding duplicate billable calls.
 
-No custom trained classifier or model weights are included. The seed catalog has limited coverage. Crop guides and AI estimates require agricultural expert verification.
+No custom trained classifier or model weights are included. The local disease knowledge base has limited coverage; catalog-independent findings use cautious Gemini-generated field steps and an expert-referral message. Crop guides and AI estimates require agricultural expert verification before treatment decisions.
 
 ## Local development
 
@@ -81,6 +82,6 @@ python manage.py test
 python manage.py makemigrations --check --dry-run
 ```
 
-Tests cover account flows, ownership, 1-5 uploads, malformed files, image rotation/metadata, repeated multipart fields, input errors, CSRF, feedback, PDFs on storage without filesystem paths, query counts, and mocked Gemini success/failure/invalid output. A passing mocked provider test does not verify a live API key or model account.
+Tests cover account flows, ownership, 1-5 uploads, malformed files, image rotation/metadata, repeated multipart fields, input errors, CSRF, feedback, PDFs on storage without filesystem paths, query counts, the 30-crop seed catalog, catalog-independent findings, and mocked Gemini success/failure/invalid output. A passing mocked provider test does not verify a live API key or model account.
 
 Official integration references: [Django storage](https://docs.djangoproject.com/en/5.2/ref/settings/#storages), [Gemini image inputs](https://ai.google.dev/gemini-api/docs/image-understanding), [structured responses](https://ai.google.dev/gemini-api/docs/structured-output).
