@@ -31,6 +31,11 @@ class Crop(models.Model):
             return self.name_hi
         return self.name
 
+    @property
+    def icon_symbol(self):
+        from .catalog import CROP_SYMBOLS
+        return CROP_SYMBOLS.get(self.name, '🌱')
+
     def __str__(self):
         if self.name_hi:
             return f"{self.name} ({self.name_hi})"

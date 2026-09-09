@@ -33,5 +33,16 @@ INDIA_MAJOR_CROPS = [
     {'name': 'Grapes', 'name_hi': 'अंगूर', 'scientific_name': 'Vitis vinifera', 'icon_class': 'fa-seedling'},
 ]
 
+CROP_SYMBOLS = {
+    'Rice': '🌾', 'Wheat': '🌾', 'Maize': '🌽', 'Pearl Millet': '🌾',
+    'Sorghum': '🌾', 'Barley': '🌾', 'Chickpea': '🫘', 'Pigeon Pea': '🫘',
+    'Green Gram': '🫘', 'Black Gram': '🫘', 'Lentil': '🫘', 'Groundnut': '🥜',
+    'Mustard': '🌼', 'Soybean': '🫘', 'Sesame': '🌱', 'Cotton': '☁️',
+    'Sugarcane': '🎋', 'Jute': '🌿', 'Tea': '🍵', 'Coffee': '☕',
+    'Potato': '🥔', 'Tomato': '🍅', 'Onion': '🧅', 'Chilli': '🌶️',
+    'Brinjal': '🍆', 'Okra': '🌿', 'Mango': '🥭', 'Banana': '🍌',
+    'Apple': '🍎', 'Grapes': '🍇',
+}
+
 for crop in INDIA_MAJOR_CROPS:
     crop.setdefault('description', 'Supported by live multi-photo Gemini plant-health assessment.')

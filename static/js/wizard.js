@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     $('selected_crop_id').value = card.dataset.cropId;
     showError('');
   }
-  cards.forEach(card => card.addEventListener('click', () => selectCrop(card)));
+  cards.forEach(card => card.addEventListener('click', () => { selectCrop(card); goToStep(2); }));
   const preselected = cards.find(card => card.dataset.cropId === new URLSearchParams(location.search).get('crop'));
   if (preselected) selectCrop(preselected);
   $('cropSearchInput').addEventListener('input', event => {
@@ -152,7 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
     panes.forEach((pane, index) => { pane.style.display = index + 1 === step ? 'block' : 'none'; });
     for (let index = 1; index <= 4; index++) { const marker = $(`step-ind-${index}`); marker.classList.toggle('active', index === step); marker.classList.toggle('completed', index < step); marker.setAttribute('aria-current', index === step ? 'step' : 'false'); }
     $('btn-prev').style.display = step === 2 || step === 3 ? 'inline-block' : 'none';
-    $('btn-next').style.display = step < 3 ? 'inline-block' : 'none';
+    $('btn-next').style.display = step === 2 ? 'inline-block' : 'none';
     $('btn-submit').style.display = step === 3 ? 'inline-block' : 'none';
     $('uploadConsent').hidden = step !== 3;
     const heading = panes[step - 1].querySelector('h4, h3');
@@ -197,5 +197,5 @@ document.addEventListener('DOMContentLoaded', () => {
     xhr.send(data);
   });
   window.addEventListener('pagehide', event => { if (!event.persisted) photos.forEach(photo => URL.revokeObjectURL(photo.url)); });
-  goToStep(1); renderPhotos();
+  goToStep(preselected ? 2 : 1); renderPhotos();
 });

@@ -60,7 +60,7 @@
             {% for crop in crops %}
               <div class="col-lg-3 col-md-4 col-6">
                 <button type="button" aria-pressed="false" class="crop-card crop-select-card w-100 h-100" data-crop-id="{{ crop.id }}" data-crop-name="{{ crop.name }}">
-                  <div class="crop-icon"><i class="fas {{ crop.icon_class|default:'fa-seedling' }}"></i></div>
+                  <div class="crop-icon"><span class="crop-symbol" aria-hidden="true">{{ crop.icon_symbol }}</span></div>
                   <h6 class="fw-bold text-dark mb-1">{{ crop.name }}</h6>
                   {% if crop.name_hi %}<small class="text-muted d-block">({{ crop.name_hi }})</small>{% endif %}
                 </button>

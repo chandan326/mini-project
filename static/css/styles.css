@@ -207,6 +207,19 @@ a:hover {
   margin-bottom: 0.75rem;
 }
 
+.crop-symbol {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  font-size: 2.5rem;
+  line-height: 1;
+  min-height: 1em;
+}
+
+.crop-symbol-lg { font-size: 3rem; }
+.crop-symbol-xl { font-size: 4rem; }
+
 /* Wizard Step Bar */
 .wizard-step-bar {
   display: flex;

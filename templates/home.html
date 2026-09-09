@@ -128,7 +128,7 @@
         <div class="col-lg-3 col-md-4 col-6">
           <a href="{% url 'wizard' %}?crop={{ crop.id }}" class="text-decoration-none">
             <div class="agri-card text-center h-100">
-              <i class="fas {{ crop.icon_class|default:'fa-seedling' }} fa-3x text-success mb-3"></i>
+              <span class="crop-symbol crop-symbol-lg mb-3" aria-hidden="true">{{ crop.icon_symbol }}</span>
               <h5 class="fw-bold text-dark mb-1">{{ crop.display_name }}</h5>
               {% if UI.is_hi and crop.name %}<span class="text-muted small">({{ crop.name }})</span>{% endif %}
               <div class="mt-2">

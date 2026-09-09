@@ -7,7 +7,7 @@
 <div class="container py-4">
   <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 pb-3 border-bottom gap-3">
     <div class="d-flex align-items-center gap-3">
-      <i class="fas {{ crop.icon_class|default:'fa-seedling' }} fa-3x text-success"></i>
+      <span class="crop-symbol crop-symbol-lg" aria-hidden="true">{{ crop.icon_symbol }}</span>
       <div>
         <h2 class="fw-bold text-dark mb-0">{{ crop.name }}</h2>
         {% if crop.name_hi %}<span class="text-muted">({{ crop.name_hi }})</span>{% endif %}
