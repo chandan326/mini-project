@@ -227,8 +227,14 @@ MESSAGE_TAGS = {40: 'danger'}
 
 # Platform Custom Settings
 DEMO_MODE = os.getenv('DEMO_MODE', 'True').lower() == 'true'
-GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
-GEMINI_MODEL = os.getenv('GEMINI_MODEL') or 'gemini-3.8-flash'
+AI_PROVIDER = (os.getenv('AI_PROVIDER') or 'gemini').strip().lower()
+ENABLE_AI_GENERATION = os.getenv('ENABLE_AI_GENERATION', 'true').strip().lower() in ('true', '1', 'yes', 'on')
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '').strip()
+GEMINI_MODEL = (os.getenv('GEMINI_MODEL') or 'gemini-3.1-flash-lite').strip().removeprefix('models/')
+try:
+    GEMINI_TIMEOUT_SECONDS = max(5, min(120, int(os.getenv('GEMINI_TIMEOUT_SECONDS') or '60')))
+except ValueError:
+    GEMINI_TIMEOUT_SECONDS = 60
 CONFIDENCE_THRESHOLD = float(os.getenv('CONFIDENCE_THRESHOLD') or '0.60')
 CONSISTENCY_THRESHOLD = float(os.getenv('CONSISTENCY_THRESHOLD') or '0.50')
 MAX_DIAGNOSIS_IMAGES = 5

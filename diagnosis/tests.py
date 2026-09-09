@@ -19,6 +19,12 @@ def plant_image(name='plant.jpg', size=(400, 300), color='green'):
     return SimpleUploadedFile(name, buffer.getvalue(), content_type='image/jpeg')
 
 
+def gemini_response(output, finish='STOP'):
+    provider = Mock(status_code=200)
+    provider.json.return_value = {'candidates': [{'finishReason': finish, 'content': {'parts': [{'text': json.dumps(output)}]}}]}
+    return provider
+
+
 @override_settings(DEMO_MODE=True, STORAGES={'default': {'BACKEND': 'django.core.files.storage.InMemoryStorage'}, 'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'}})
 class DiagnosisFlowTest(TestCase):
     def setUp(self):
@@ -156,13 +162,17 @@ class DiagnosisFlowTest(TestCase):
 
     def test_gemini_single_request_includes_all_photos(self):
         output = {'disease_id': self.disease.id, 'confidence': .82, 'contains_plant': True, 'inconsistent': False, 'explanation': 'Visible spots require expert confirmation.'}
-        provider = Mock()
-        provider.json.return_value = {'outputs': [{'type': 'text', 'text': json.dumps(output)}]}
-        with override_settings(DEMO_MODE=False, GEMINI_API_KEY='test-only'):
+        provider = gemini_response(output)
+        with override_settings(DEMO_MODE=False, GEMINI_API_KEY='test-only', GEMINI_MODEL='gemini-3.1-flash-lite', GEMINI_TIMEOUT_SECONDS=60):
             with patch('ml_model.gemini.requests.post', return_value=provider) as request:
                 response = self.submit(5)
                 self.assertEqual(request.call_count, 1)
-                self.assertEqual(len(request.call_args.kwargs['json']['input']), 6)
+                self.assertEqual(request.call_args.args[0], 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent')
+                parts = request.call_args.kwargs['json']['contents'][0]['parts']
+                self.assertEqual(len(parts), 6)
+                self.assertEqual(sum('inlineData' in part for part in parts), 5)
+                self.assertEqual(request.call_args.kwargs['timeout'], (5,60))
+                self.assertFalse(request.call_args.kwargs['allow_redirects'])
                 self.assertFalse(request.call_args.kwargs['json']['store'])
         self.assertEqual(response.status_code, 201, response.content)
         self.assertEqual(response.json()['analysis_method'], 'gemini')
@@ -171,11 +181,63 @@ class DiagnosisFlowTest(TestCase):
     def test_provider_invalid_or_non_plant_response(self):
         base = {'disease_id': self.disease.id, 'confidence': .82, 'contains_plant': True, 'inconsistent': False, 'explanation': 'Visible spots.'}
         for overrides, expected in [({'disease_id': 9999},503), ({'confidence': 3},503), ({'contains_plant': False},400), ({'confidence': '0.8'},503)]:
-            provider = Mock()
-            provider.json.return_value = {'outputs': [{'type':'text', 'text':json.dumps({**base, **overrides})}]}
+            provider = gemini_response({**base, **overrides})
             with override_settings(DEMO_MODE=False, GEMINI_API_KEY='test-only'):
                 with patch('ml_model.gemini.requests.post', return_value=provider):
                     self.assertEqual(self.submit().status_code, expected)
+
+    def test_disabled_unsupported_or_malformed_configuration_never_calls_provider(self):
+        for config in [{'ENABLE_AI_GENERATION': False}, {'AI_PROVIDER': 'unsupported'}, {'GEMINI_MODEL': 'gemini-3/../../other'}]:
+            with self.subTest(config=config), override_settings(DEMO_MODE=False, GEMINI_API_KEY='test-only', **config):
+                with patch('ml_model.gemini.requests.post') as request:
+                    self.assertEqual(self.submit().status_code, 503)
+                    request.assert_not_called()
+                    self.assertContains(self.client.get('/diagnosis/'), 'Image analysis is currently unavailable')
+                    self.assertEqual(self.client.get('/api/health/').json()['analysis'], 'unavailable')
+        self.assertFalse(Diagnosis.objects.exists())
+
+    def test_provider_auth_quota_and_model_errors_are_actionable_and_private(self):
+        for status, message in [(401, 'authenticate'), (403, 'authenticate'), (404, 'model is unavailable'), (429, 'request limit')]:
+            provider = Mock(status_code=status)
+            provider.json.return_value = {'error': {'message': 'Secret: never-return-this'}}
+            with self.subTest(status=status), override_settings(DEMO_MODE=False, GEMINI_API_KEY='never-return-this'):
+                with patch('ml_model.gemini.requests.post', return_value=provider):
+                    response = self.submit()
+            self.assertEqual(response.status_code, 503)
+            self.assertIn(message, response.json()['detail'])
+            self.assertNotIn('never-return-this', response.content.decode())
+        self.assertFalse(DiagnosisImage.objects.exists())
+
+    def test_incomplete_empty_or_malformed_provider_output_never_completes(self):
+        valid = {'disease_id': self.disease.pk, 'confidence': .8, 'contains_plant': True, 'inconsistent': False, 'explanation': 'Visible spots.'}
+        responses = [gemini_response(valid, finish='MAX_TOKENS'), gemini_response(valid, finish='SAFETY')]
+        for body in [{'candidates': []}, {'promptFeedback': {'blockReason': 'SAFETY'}}, {'candidates': [{'finishReason': 'STOP', 'content': {'parts': [{'text': 'not JSON'}]}}]}]:
+            provider = Mock(status_code=200)
+            provider.json.return_value = body
+            responses.append(provider)
+        with override_settings(DEMO_MODE=False, GEMINI_API_KEY='test-only'):
+            for provider in responses:
+                with patch('ml_model.gemini.requests.post', return_value=provider):
+                    self.assertEqual(self.submit().status_code, 503)
+        self.assertFalse(Diagnosis.objects.filter(status='COMPLETED').exists())
+        self.assertFalse(DiagnosisImage.objects.exists())
+
+    def test_unknown_assessment_has_no_forced_disease_or_treatment(self):
+        provider = gemini_response({'disease_id': 0, 'confidence': .95, 'contains_plant': True, 'inconsistent': False, 'explanation': 'No identifiable disease.'})
+        with override_settings(DEMO_MODE=False, GEMINI_API_KEY='test-only'):
+            with patch('ml_model.gemini.requests.post', return_value=provider):
+                response = self.submit()
+        self.assertEqual(response.status_code, 201)
+        self.assertIsNone(response.json()['predicted_disease'])
+        self.assertEqual(response.json()['confidence_score'], 0)
+        self.assertTrue(Diagnosis.objects.get().is_low_confidence)
+
+    def test_configured_live_mode_removes_unavailable_banner(self):
+        with override_settings(DEMO_MODE=False, GEMINI_API_KEY='test-only', ENABLE_AI_GENERATION=True, AI_PROVIDER='gemini', GEMINI_TIMEOUT_SECONDS=60):
+            response = self.client.get('/diagnosis/')
+            self.assertNotContains(response, 'Image analysis is currently unavailable')
+            self.assertContains(response, 'data-request-timeout="150000"')
+            self.assertEqual(self.client.get('/api/health/').json()['analysis'], 'gemini')
 
     def test_pdf_escapes_questionnaire_text_and_works_without_paths(self):
         data = self.submit(treatment_details='<img src="file:///does-not-exist"/> & text').json()

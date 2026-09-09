@@ -3,6 +3,7 @@ import os
 from django.conf import settings
 from django.db import connection
 from django.http import JsonResponse
+from ml_model.configuration import analysis_mode
 
 
 def health_view(request):
@@ -16,7 +17,7 @@ def health_view(request):
     serverless = bool(os.getenv('VERCEL') or os.getenv('AWS_LAMBDA_FUNCTION_NAME'))
     persistent = connection.vendor != 'sqlite' or not serverless
     media_persistent = settings.CLOUDINARY_CONFIGURED or not serverless
-    analysis = 'demo' if settings.DEMO_MODE else ('gemini' if settings.GEMINI_API_KEY else 'unavailable')
+    analysis = analysis_mode()
     ready = database_ok and persistent and media_persistent and analysis == 'gemini'
     response = JsonResponse({
         'status': 'ok' if database_ok else 'unavailable', 'production_ready': ready,

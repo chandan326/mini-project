@@ -15,7 +15,22 @@ Django 5.2 plant assessment app in `chandan326/mini-project`, deployed as Vercel
 
 `DEMO_MODE=True` exercises upload, questionnaire, storage, feedback and PDF generation. It **does not identify disease** and returns no invented disease probabilities. Existing reports from the original random predictor are treated as demo reports.
 
-For live image analysis, set `DEMO_MODE=False`, `GEMINI_API_KEY` and optionally `GEMINI_MODEL` (default `gemini-3.8-flash`). The server sends all selected photos and questionnaire in one Gemini Interactions API request. Structured output is validated against the selected crop's disease catalog. Unknown or uncertain conditions are never forced into a catalog disease. Provider errors return HTTP 503; they never silently produce a demo diagnosis. The model's confidence is not measured diagnostic accuracy. This integration needs a working account/key and live verification before real-world use.
+For live image analysis, set `DEMO_MODE=False`, `GEMINI_API_KEY` and optionally `GEMINI_MODEL` (default `gemini-3.1-flash-lite`). The server sends all selected photos and questionnaire in one Gemini `generateContent` API request. Structured output is validated against the selected crop's disease catalog. Unknown or uncertain conditions are never forced into a catalog disease. Provider errors return HTTP 503; they never silently produce a demo diagnosis. The model's confidence is not measured diagnostic accuracy. This integration needs a working account/key and live verification before real-world use.
+
+Live deployment settings (set the key only as a server-side secret):
+
+```dotenv
+AI_PROVIDER=gemini
+GEMINI_API_KEY=<your-server-side-key>
+GEMINI_MODEL=gemini-3.1-flash-lite
+GEMINI_TIMEOUT_SECONDS=60
+ENABLE_AI_GENERATION=true
+DEMO_MODE=false
+```
+
+`DEMO_MODE=true` explicitly selects the demo workflow. Otherwise `ENABLE_AI_GENERATION=false` disables provider requests, and unsupported providers or missing/invalid model configuration fail before storing an assessment. The UI and health endpoint use the same readiness rules. `GEMINI_TIMEOUT_SECONDS` controls the provider read timeout (5–120 seconds, default 60; malformed values fall back to 60), with a separate 5-second connection timeout. The browser allows additional time for photo storage and upload. Deploy again after changing hosting environment variables.
+
+Authentication, model-access and quota errors receive clear messages without returning provider response bodies or credentials. Incomplete, blocked or malformed AI responses never produce a completed report. The app does not retry provider requests automatically, avoiding duplicate billable calls.
 
 No custom trained classifier or model weights are included. The seed catalog has limited coverage. Crop guides and AI estimates require agricultural expert verification.
 

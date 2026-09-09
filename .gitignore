@@ -10,6 +10,8 @@ env/
 # db.sqlite3
 db.sqlite3-journal
 .env
+.env.local
+.env.*.local
 
 # Media uploads
 media/

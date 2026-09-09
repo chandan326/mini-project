@@ -13,6 +13,7 @@ from .access import get_accessible_diagnosis
 from .serializers import DiagnosisSerializer, FeedbackInputSerializer
 from .submission import submit_diagnosis
 from knowledge_base.services import get_disease_knowledge
+from ml_model.configuration import analysis_mode
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +22,8 @@ def wizard_view(request):
     context = {
         'crops': Crop.objects.filter(is_active=True),
         'symptoms': Symptom.objects.all(),
-        'analysis_available': settings.DEMO_MODE or bool(settings.GEMINI_API_KEY),
+        'analysis_available': analysis_mode() != 'unavailable',
+        'request_timeout_ms': (settings.GEMINI_TIMEOUT_SECONDS + 90) * 1000,
     }
     if request.method == 'POST':
         ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'

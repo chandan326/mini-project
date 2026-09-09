@@ -2,6 +2,7 @@ import logging
 from django.conf import settings
 from django.db import transaction
 from ml_model.gemini import AnalysisUnavailable
+from ml_model.configuration import live_configuration_error
 from .access import remember_diagnosis
 from .serializers import DiagnosisInputSerializer
 from .uploads import collect_images, prepare_images
@@ -16,8 +17,10 @@ def submit_diagnosis(request, data, files):
     cleaned = dict(serializer.validated_data)
     crop = cleaned.pop('crop_id')
     images = prepare_images(collect_images(files))
-    if not settings.DEMO_MODE and not settings.GEMINI_API_KEY:
-        raise AnalysisUnavailable('Live image analysis has not been configured yet.')
+    if not settings.DEMO_MODE:
+        error = live_configuration_error()
+        if error:
+            raise AnalysisUnavailable(error)
     diagnosis = create_diagnosis_session(crop, request.user)
     saved_images = []
     try:

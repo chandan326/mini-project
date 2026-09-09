@@ -35,7 +35,7 @@
 
     <!-- Main Wizard Card -->
     <div class="agri-card p-4 mb-4 shadow-md">
-      <form data-api-url="{% url 'api_diagnosis_create' %}" id="diagnosisWizardForm" method="post" enctype="multipart/form-data">
+      <form data-api-url="{% url 'api_diagnosis_create' %}" data-request-timeout="{{ request_timeout_ms }}" id="diagnosisWizardForm" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <div id="wizardError" class="alert alert-danger" role="alert" tabindex="-1" {% if not submission_error %}hidden{% endif %}>{{ submission_error }}</div>
         {% if DEMO_MODE %}<div class="alert alert-info small">Demo mode: try photo capture, upload and reports. Disease identification requires live AI analysis to be enabled.</div>{% endif %}

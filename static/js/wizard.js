@@ -179,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (step !== 3) { goToStep(Math.min(step + 1, 3)); return; }
     submitting = true; showError(''); updateControls(); goToStep(4);
     const data = new FormData(form); photos.forEach(photo => data.append('images', photo.file));
-    const xhr = new XMLHttpRequest(); xhr.open('POST', form.dataset.apiUrl); xhr.timeout = 90000;
+    const xhr = new XMLHttpRequest(); xhr.open('POST', form.dataset.apiUrl); xhr.timeout = Number(form.dataset.requestTimeout) || 150000;
     xhr.setRequestHeader('X-CSRFToken', data.get('csrfmiddlewaretoken')); xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
     $('loadingStatusText').textContent = `Uploading ${photos.length} photo${photos.length === 1 ? '' : 's'}…`;
     $('loadingSubText').textContent = 'Your assessment starts as soon as the upload completes.';
