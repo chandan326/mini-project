@@ -39,6 +39,7 @@
         {% csrf_token %}
         <div id="wizardError" class="alert alert-danger" role="alert" tabindex="-1" {% if not submission_error %}hidden{% endif %}>{{ submission_error }}</div>
         {% if DEMO_MODE %}<div class="alert alert-info small">Demo mode: try photo capture, upload and reports. Disease identification requires live AI analysis to be enabled.</div>{% endif %}
+        {% if not analysis_available %}<div class="alert alert-warning small" role="status">Image analysis is currently unavailable. You can try the photo tools, but submitting an assessment will not produce a report. Please try again later.</div>{% endif %}
         <noscript><p class="alert alert-warning">Enable JavaScript to use photo capture and the assessment form.</p></noscript>
         <input type="hidden" name="crop_id" id="selected_crop_id" value="">
 

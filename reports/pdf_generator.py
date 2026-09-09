@@ -1,10 +1,14 @@
 from io import BytesIO
 from xml.sax.saxutils import escape
+from pathlib import Path
 from PIL import Image as PillowImage
 from knowledge_base.services import get_disease_knowledge
 
 
 def generate_diagnosis_pdf(diagnosis):
+    import reportlab
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
     from reportlab.lib import colors
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.pagesizes import A4
@@ -13,7 +17,14 @@ def generate_diagnosis_pdf(diagnosis):
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=36, leftMargin=36, topMargin=36, bottomMargin=36)
     styles = getSampleStyleSheet()
-    styles.add(ParagraphStyle(name='ReportBody', fontSize=10, leading=15, spaceAfter=8))
+    fonts = Path(reportlab.__file__).parent / 'fonts'
+    if 'AgriSans' not in pdfmetrics.getRegisteredFontNames():
+        pdfmetrics.registerFont(TTFont('AgriSans', str(fonts / 'Vera.ttf')))
+        pdfmetrics.registerFont(TTFont('AgriSansBold', str(fonts / 'VeraBd.ttf')))
+    styles['Normal'].fontName = 'AgriSans'
+    styles['Title'].fontName = 'AgriSansBold'
+    styles['Heading2'].fontName = 'AgriSansBold'
+    styles.add(ParagraphStyle(name='ReportBody', fontName='AgriSans', fontSize=10, leading=15, spaceAfter=8))
     styles['Title'].textColor = colors.HexColor('#1e5631')
     styles['Heading2'].textColor = colors.HexColor('#1e5631')
     def paragraph(text, style='ReportBody'):
@@ -74,7 +85,7 @@ def generate_diagnosis_pdf(diagnosis):
         story.extend([paragraph('Next steps', 'Heading2'), paragraph('Monitor changes, take clear plant photos in natural light, and contact a local agricultural extension expert if symptoms spread or the plant deteriorates. A demo or uncertain result cannot identify a disease.')])
     story.extend([Spacer(1, 12), HRFlowable(width='100%', color=colors.lightgrey), paragraph('AI-assisted information is not a confirmed plant diagnosis. Verify findings with an agricultural expert before choosing treatment.')])
     def footer(canvas, document):
-        canvas.setFont('Helvetica', 8)
+        canvas.setFont('AgriSans', 8)
         canvas.drawRightString(A4[0] - 36, 20, f'AgriHealth AI | Page {document.page}')
     doc.build(story, onFirstPage=footer, onLaterPages=footer)
     buffer.seek(0)

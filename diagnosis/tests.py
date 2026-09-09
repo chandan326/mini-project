@@ -149,7 +149,10 @@ class DiagnosisFlowTest(TestCase):
 
     def test_missing_live_model_is_explicit(self):
         with override_settings(DEMO_MODE=False, GEMINI_API_KEY=''):
+            self.assertContains(self.client.get('/diagnosis/'), 'Image analysis is currently unavailable')
             self.assertEqual(self.submit().status_code, 503)
+        self.assertFalse(Diagnosis.objects.exists())
+        self.assertFalse(DiagnosisImage.objects.exists())
 
     def test_gemini_single_request_includes_all_photos(self):
         output = {'disease_id': self.disease.id, 'confidence': .82, 'contains_plant': True, 'inconsistent': False, 'explanation': 'Visible spots require expert confirmation.'}

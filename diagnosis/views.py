@@ -1,4 +1,5 @@
 import logging
+from django.conf import settings
 from django.shortcuts import render, redirect
 from django.http import JsonResponse, FileResponse
 from django.shortcuts import get_object_or_404
@@ -17,7 +18,11 @@ logger = logging.getLogger(__name__)
 
 
 def wizard_view(request):
-    context = {'crops': Crop.objects.filter(is_active=True), 'symptoms': Symptom.objects.all()}
+    context = {
+        'crops': Crop.objects.filter(is_active=True),
+        'symptoms': Symptom.objects.all(),
+        'analysis_available': settings.DEMO_MODE or bool(settings.GEMINI_API_KEY),
+    }
     if request.method == 'POST':
         ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
         try:
