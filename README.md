@@ -4,6 +4,9 @@ Django 5.2 plant assessment app in `chandan326/mini-project`, deployed as Vercel
 
 ## Photo workflow
 
+- Home and the crop directory have instant English/Hindi/scientific-name search with a clear button and result count.
+- “How It Works” opens a keyboard-accessible video dialog with play/pause, replay, ±10s, speed, native volume/fullscreen, close and download controls. Closing stops playback. The 60-second 720p MP4 is bundled locally, uses female synthetic English narration and burned-in captions, and loads only when opened. No InVideo or paid API is used for the final video. Rebuild offline using `python scripts/build_tutorial.py` with Pillow and FFmpeg (Flite support).
+
 - Select a crop, add **1-5 photos** from the gallery, drag and drop, or use the camera.
 - The scanner includes 30 widely grown Indian field and horticultural crops, with English and Hindi names. Re-running `python manage.py seed_data` safely adds or updates the full list.
 - Live camera preview supports capture, switch camera and close; a device-camera picker is also available. Camera access requires HTTPS (localhost is supported for development) and browser permission.

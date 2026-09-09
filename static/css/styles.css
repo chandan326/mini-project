@@ -220,6 +220,17 @@ a:hover {
 .crop-symbol-lg { font-size: 3rem; }
 .crop-symbol-xl { font-size: 4rem; }
 
+[data-crop-search-item][hidden] { display: none !important; }
+.crop-search-controls { max-width: 640px; }
+.tutorial-dialog { width: min(960px, 96vw); max-height: 94dvh; padding: 0; border: 1px solid #b8d4bd; border-radius: 20px; box-shadow: 0 24px 80px #0006; overflow-y: auto; }
+.tutorial-dialog::backdrop { background: #08271dde; }
+.tutorial-header { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 18px; }
+.tutorial-video { display: block; width: 100%; aspect-ratio: 16 / 9; background: #153d2b; }
+.tutorial-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 14px 18px; }
+.tutorial-speed { width: 80px; }
+body.tutorial-open { overflow: hidden; }
+@media (max-width: 576px) { .tutorial-header h2 { font-size: 1.1rem; } .tutorial-header { padding: 12px; } }
+
 /* Wizard Step Bar */
 .wizard-step-bar {
   display: flex;

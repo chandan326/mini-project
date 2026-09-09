@@ -1,0 +1,9 @@
+<div class="crop-search-controls mb-4">
+  <label for="cropFilter" class="form-label fw-bold">{% if UI.is_hi %}फसल खोजें{% else %}Search crops{% endif %}</label>
+  <div class="input-group">
+    <span class="input-group-text bg-white" aria-hidden="true"><i class="fas fa-search"></i></span>
+    <input id="cropFilter" data-crop-search type="search" class="form-control" aria-controls="searchableCrops" placeholder="{% if UI.is_hi %}फसल का नाम, जैसे आलू या गेहूं{% else %}Try Potato, धान, or Solanum…{% endif %}" autocomplete="off">
+    <button type="button" class="btn btn-outline-success" data-crop-clear>{% if UI.is_hi %}साफ करें{% else %}Clear{% endif %}</button>
+  </div>
+  <p class="small text-muted mt-2 mb-0" data-crop-count role="status" aria-live="polite" data-label="{% if UI.is_hi %}फसलें मिलीं{% else %}crops found{% endif %}"></p>
+</div>

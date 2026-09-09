@@ -4,15 +4,17 @@
 {% block title %}Supported Crops Database | AgriHealth AI{% endblock %}
 
 {% block content %}
-<div class="container py-4">
+<div class="container py-4" data-crop-search-root>
   <div class="text-center max-width-700 mx-auto mb-5">
     <h2 class="fw-bold text-success display-6">Supported Crop Database</h2>
     <p class="text-muted lead">Explore all agricultural crops supported by our AI disease detection model.</p>
   </div>
 
-  <div class="row g-4">
+  {% include 'crops/search_controls.html' %}
+  <p data-crop-empty class="alert alert-info" hidden>{% if UI.is_hi %}कोई फसल नहीं मिली। दूसरा नाम खोजें।{% else %}No crops found. Try another name or clear your search.{% endif %}</p>
+  <div class="row g-4" id="searchableCrops">
     {% for crop in crops %}
-      <div class="col-lg-3 col-md-4 col-sm-6">
+      <div class="col-lg-3 col-md-4 col-sm-6" data-crop-search-item="{{ crop.name }} {{ crop.name_hi|default:'' }} {{ crop.scientific_name|default:'' }}">
         <div class="agri-card text-center h-100">
           <span class="crop-symbol crop-symbol-xl mb-3" aria-hidden="true">{{ crop.icon_symbol }}</span>
           <h4 class="fw-bold text-dark mb-1">{{ crop.name }}</h4>
@@ -38,3 +40,4 @@
   </div>
 </div>
 {% endblock %}
+{% block extra_js %}<script src="{% static 'js/crop-search.js' %}" defer></script>{% endblock %}
