@@ -79,10 +79,11 @@ def generate_diagnosis_pdf(diagnosis):
             f'Spreading: {answers.is_spreading}\nTreatment applied: {answers.treatment_applied}\n'
             f'Treatment details: {answers.treatment_details}')])
     knowledge = get_disease_knowledge(disease)
-    if knowledge:
+    if knowledge and not assessment:
         for title, text in [('Immediate field care', knowledge.treatment_immediate), ('Crop management', knowledge.treatment_management), ('Prevention', knowledge.prevention_methods), ('Monitoring', knowledge.monitoring_guidance)]:
             story.extend([paragraph(title, 'Heading2'), paragraph(text)])
     elif assessment:
+        story.extend([paragraph('Observed signs', 'Heading2'), paragraph('\n'.join(assessment.get('observed_signs', [])) or 'No specific visible signs were identified.')])
         story.extend([paragraph('Possible cause', 'Heading2'), paragraph(assessment.get('likely_cause') or 'The cause could not be determined from photos alone.')])
         for title, values in [('Safe immediate steps', assessment.get('immediate_steps', [])), ('Prevention and monitoring', assessment.get('prevention_steps', []))]:
             story.extend([paragraph(title, 'Heading2'), paragraph('\n'.join(f'• {value}' for value in values) or 'Monitor the plant and consult a local agricultural officer if symptoms change.')])

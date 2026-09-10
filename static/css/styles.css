@@ -222,6 +222,22 @@ a:hover {
 
 [data-crop-search-item][hidden] { display: none !important; }
 .crop-search-controls { max-width: 640px; }
+.crop-section-header { display: grid; grid-template-columns: minmax(240px, 1.1fr) minmax(260px, 1fr) auto; align-items: center; gap: 24px; }
+.crop-section-heading p { font-size: .9rem; }
+.crop-search-compact { width: 100%; max-width: none; min-width: 0; }
+.crop-search-compact .input-group { flex-wrap: nowrap; }
+.crop-search-compact input { min-width: 0; }
+.crop-search-compact [data-crop-count] { font-size: .75rem; line-height: 1.2; }
+.crop-section-link { white-space: nowrap; }
+@media (max-width: 991px) {
+  .crop-section-header { grid-template-columns: minmax(0, 1fr) auto; gap: 12px 16px; }
+  .crop-search-compact { grid-row: 2; grid-column: 1 / -1; }
+  .crop-section-link { grid-row: 1; grid-column: 2; }
+}
+@media (max-width: 575px) {
+  .crop-section-header { grid-template-columns: minmax(0, 1fr); }
+  .crop-section-link { grid-row: 3; grid-column: 1; justify-self: start; }
+}
 .tutorial-dialog { width: min(960px, 96vw); max-height: 94dvh; padding: 0; border: 1px solid #b8d4bd; border-radius: 20px; box-shadow: 0 24px 80px #0006; overflow-y: auto; }
 .tutorial-dialog::backdrop { background: #08271dde; }
 .tutorial-header { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 18px; }

@@ -25,7 +25,21 @@
     </div>
 
     {% if diagnosis.is_demo %}<div class="alert alert-info" role="status"><strong>Demo assessment.</strong> Your photos were processed and saved, but no live image model is enabled. This report does not identify a plant disease.</div>{% endif %}
-    <div class="agri-card p-3 mb-4"><h5 class="fw-bold">Your plant photos</h5><div class="photo-grid">{% for photo in diagnosis.images.all %}<div class="photo-card"><img src="{% url 'diagnosis_image' pk=diagnosis.id image_id=photo.id %}" alt="Submitted plant photo {{ photo.slot_number }}" loading="lazy" decoding="async"><span class="photo-caption">Photo {{ photo.slot_number }}{% if photo.quality_warning %} · {{ photo.quality_warning }}{% endif %}</span></div>{% endfor %}</div></div>
+    <div class="agri-card p-3 mb-4">
+      <h5 class="fw-bold">Your plant photos <small class="text-muted">({{ diagnosis.images.count }})</small></h5>
+      <div class="photo-grid">
+        {% for photo in diagnosis.images.all %}
+          <div class="photo-card" data-result-photo>
+            <img src="{% url 'diagnosis_image' pk=diagnosis.id image_id=photo.id %}" alt="Submitted plant photo {{ photo.slot_number }}" decoding="async">
+            <div class="photo-load-error p-3" role="status" hidden>
+              <p class="small mb-2">This saved photo could not be retrieved. Your assessment text is still available.</p>
+              <button type="button" class="btn btn-sm btn-outline-success" data-retry-photo>Retry photo {{ photo.slot_number }}</button>
+            </div>
+            <span class="photo-caption">Photo {{ photo.slot_number }}{% if photo.quality_warning %} · {{ photo.quality_warning }}{% endif %}</span>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
     <!-- Low Confidence / Discrepancy Warning Box -->
     {% if not diagnosis.is_demo %}{% if diagnosis.is_low_confidence or diagnosis.is_inconsistent %}
       <div class="p-4 bg-warning-subtle text-dark rounded-4 border border-warning mb-4 shadow-sm">
@@ -36,6 +50,8 @@
             <p class="small text-muted mb-2">
               {% if diagnosis.is_inconsistent %}
                 Different photos produced inconsistent visual patterns.
+              {% elif diagnosis.ai_assessment.category == 'unknown' %}
+                These photos do not provide enough evidence to identify a specific condition.
               {% else %}
                 The confidence score ({{ diagnosis.confidence_pct }}%) is below our reliable threshold ({{ CONFIDENCE_THRESHOLD_PCT }}%).
               {% endif %}
@@ -63,7 +79,7 @@
           <h2 class="fw-bold text-dark mt-1 mb-2">
             {% if not diagnosis.is_demo %}
               {{ diagnosis.assessed_condition }}
-              {% if disease.name_hi %}<span class="fs-5 text-muted">({{ disease.name_hi }})</span>{% endif %}
+              {% if disease.name_hi and not diagnosis.ai_assessment %}<span class="fs-5 text-muted">({{ disease.name_hi }})</span>{% endif %}
             {% else %}
               Uncertain / Unconfirmed Symptom
             {% endif %}
@@ -71,7 +87,7 @@
           
           <p class="text-muted small mb-3">
             <i class="fas fa-seedling text-success me-1"></i> Crop: <strong>{{ diagnosis.crop.name }}</strong>
-            {% if disease and disease.scientific_name %} | <em>{{ disease.scientific_name }}</em>{% elif diagnosis.ai_assessment.scientific_name %} | <em>{{ diagnosis.ai_assessment.scientific_name }}</em>{% endif %}
+            {% if diagnosis.ai_assessment.scientific_name %} | <em>{{ diagnosis.ai_assessment.scientific_name }}</em>{% elif disease and disease.scientific_name and not diagnosis.ai_assessment %} | <em>{{ disease.scientific_name }}</em>{% endif %}
           </p>
 
           <div class="d-flex align-items-center gap-2 mb-2">
@@ -80,10 +96,14 @@
               <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fs-6">Unable to determine with certainty</span>
             {% elif diagnosis.ai_assessment.category == 'healthy' %}
               <span class="badge bg-success text-white px-3 py-2 rounded-pill fs-6">No obvious disease visible</span>
-            {% elif disease and disease.severity == 'HIGH' %}
-              <span class="badge bg-danger text-white px-3 py-2 rounded-pill fs-6">Likely Affected - Severe Risk</span>
+            {% elif diagnosis.ai_assessment.category == 'pest' %}
+              <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fs-6">Possible pest damage</span>
+            {% elif diagnosis.ai_assessment.category == 'nutrient' %}
+              <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fs-6">Possible nutrient issue</span>
+            {% elif diagnosis.ai_assessment.category == 'environmental' %}
+              <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fs-6">Possible environmental stress</span>
             {% else %}
-              <span class="badge bg-success text-white px-3 py-2 rounded-pill fs-6">Likely Affected - Moderate Issue</span>
+              <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fs-6">Possible disease — needs confirmation</span>
             {% endif %}
           </div>
         </div>
@@ -123,15 +143,21 @@
     <!-- Section: Symptoms Section -->
     <div class="agri-card p-4 mb-4">
       <h4 class="fw-bold text-success mb-3">
-        <i class="fas fa-notes-medical me-2"></i> Common Symptoms
+        <i class="fas fa-notes-medical me-2"></i> Observed Signs
       </h4>
       
-      {% if knowledge and knowledge.symptoms_summary %}
+      {% if knowledge and knowledge.symptoms_summary and not diagnosis.ai_assessment %}
         <p class="text-dark mb-3">{{ knowledge.symptoms_summary }}</p>
       {% endif %}
 
       <div class="row g-3">
-        {% if disease %}
+        {% if diagnosis.ai_assessment %}
+          {% for sign in diagnosis.ai_assessment.observed_signs %}
+            <div class="col-md-4 col-sm-6"><div class="p-3 bg-light rounded-3 border h-100"><i class="fas fa-leaf text-success me-2"></i>{{ sign }}</div></div>
+          {% empty %}
+            <div class="col-12 text-muted">No specific visible signs could be identified from these photos.</div>
+          {% endfor %}
+        {% elif disease %}
           {% for sym in disease.symptoms.all %}
             <div class="col-md-4 col-sm-6">
               <div class="p-3 bg-light rounded-3 border d-flex align-items-center gap-3">
@@ -144,11 +170,7 @@
             </div>
           {% empty %}
             <div class="col-12">
-              <ul class="list-group list-group-flush">
-                <li class="list-group-item"><i class="fas fa-check text-success me-2"></i> Leaf yellowing / chlorosis</li>
-                <li class="list-group-item"><i class="fas fa-check text-success me-2"></i> Brown spots with concentric rings</li>
-                <li class="list-group-item"><i class="fas fa-check text-success me-2"></i> Leaf curling or wilting</li>
-              </ul>
+              <p class="text-muted">No specific visible signs were recorded.</p>
             </div>
           {% endfor %}
         {% elif diagnosis.ai_assessment.observed_signs %}
@@ -162,7 +184,7 @@
     </div>
 
     <!-- Section: Recommended Management -->
-    {% if knowledge %}
+    {% if knowledge and not diagnosis.ai_assessment %}
       <div class="agri-card p-4 mb-4 border-start border-4 border-success">
         <h4 class="fw-bold text-success mb-3">
           <i class="fas fa-hand-holding-medical me-2"></i> Recommended Management
@@ -275,3 +297,4 @@
   </div>
 </div>
 {% endblock %}
+{% block extra_js %}<script src="{% static 'js/result.js' %}" defer></script>{% endblock %}

@@ -30,7 +30,7 @@ class DiscoveryTutorialTests(TestCase):
                 self.assertContains(response, 'data-src="/static/video/agrihealth-tutorial.mp4"')
                 self.assertContains(response, 'Cancel / Close')
                 self.assertContains(response, 'Read the tutorial transcript')
-                self.assertContains(response, 'AI guidance is not a confirmed diagnosis.')
+                self.assertContains(response, 'AI guidance is not a diagnosis.')
 
     def test_bundled_tutorial_assets_exist(self):
         base = Path(settings.BASE_DIR) / 'static' / 'video'

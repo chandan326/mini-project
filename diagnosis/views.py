@@ -1,7 +1,7 @@
 import logging
 from django.conf import settings
 from django.shortcuts import render, redirect
-from django.http import JsonResponse, FileResponse
+from django.http import JsonResponse, FileResponse, Http404
 from django.shortcuts import get_object_or_404
 from django.contrib import messages
 from django.views.decorators.http import require_POST
@@ -48,7 +48,11 @@ def wizard_view(request):
 
 
 def result_view(request, pk):
-    diagnosis = get_accessible_diagnosis(request, pk)
+    try:
+        diagnosis = get_accessible_diagnosis(request, pk)
+    except Http404:
+        # Keep ownership private while giving expired/missing reports a usable UI.
+        return render(request, 'diagnosis/result_unavailable.html', status=404)
     # Demo and uncertain predictions must not present disease-specific care as a diagnosis.
     disease = diagnosis.predicted_disease if not diagnosis.is_demo and not diagnosis.is_low_confidence else None
     return render(request, 'diagnosis/result.html', {
@@ -80,4 +84,7 @@ def image_view(request, pk, image_id):
         response['Cache-Control'] = 'private, max-age=300'
         return response
     except Exception:
-        return JsonResponse({'error': 'Photo is temporarily unavailable.'}, status=503)
+        logger.warning('Saved assessment image unavailable: diagnosis_id=%s image_id=%s', diagnosis.pk, image.pk)
+        response = JsonResponse({'error': 'This saved photo could not be retrieved. Please retry.'}, status=503)
+        response['Cache-Control'] = 'private, no-store'
+        return response

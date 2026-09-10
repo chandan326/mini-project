@@ -2,11 +2,14 @@
 import base64
 import json
 import math
+import logging
 import requests
 from django.conf import settings
 from rest_framework.exceptions import APIException, ValidationError
 from diseases.models import Disease
 from .configuration import live_configuration_error
+
+logger = logging.getLogger(__name__)
 
 
 class AnalysisUnavailable(APIException):
@@ -29,6 +32,10 @@ def analyze_images(images, crop, answers):
         'clearer photos, and consultation with a local agricultural officer. '
         'Confidence is your uncalibrated assessment, not measured diagnostic accuracy. '
         'Set contains_plant=false for unrelated photos; set inconsistent=true if photos show different plants or contradictory signs. '
+        'Inspect every supplied photo. Photos of different parts of the same plant are not inherently inconsistent. '
+        'If the selected crop does not match the visible plant, use category=unknown and explain the mismatch. '
+        'Keep explanations under 1200 characters, other text fields under 600 characters, '
+        'and each list to at most 6 short items under 250 characters each. '
         + json.dumps({'crop': crop.name, 'catalog': [{'id': d.id, 'name': d.name} for d in diseases], 'questionnaire': answers})
     )
     inputs = [{'text': prompt}]
@@ -44,10 +51,10 @@ def analyze_images(images, crop, answers):
             'category': {'type': 'string', 'enum': ['disease', 'pest', 'nutrient', 'environmental', 'healthy', 'unknown']},
             'confidence': {'type': 'number', 'minimum': 0, 'maximum': 1},
             'contains_plant': {'type': 'boolean'}, 'inconsistent': {'type': 'boolean'},
-            'observed_signs': {'type': 'array', 'items': {'type': 'string'}},
+            'observed_signs': {'type': 'array', 'maxItems': 6, 'items': {'type': 'string'}},
             'likely_cause': {'type': 'string'},
-            'immediate_steps': {'type': 'array', 'items': {'type': 'string'}},
-            'prevention_steps': {'type': 'array', 'items': {'type': 'string'}},
+            'immediate_steps': {'type': 'array', 'maxItems': 6, 'items': {'type': 'string'}},
+            'prevention_steps': {'type': 'array', 'maxItems': 6, 'items': {'type': 'string'}},
             'when_to_seek_help': {'type': 'string'},
             'explanation': {'type': 'string'},
         }, 'required': [
@@ -61,7 +68,7 @@ def analyze_images(images, crop, answers):
             f'https://generativelanguage.googleapis.com/v1beta/models/{settings.GEMINI_MODEL}:generateContent',
             headers={'x-goog-api-key': settings.GEMINI_API_KEY},
             json={'contents': [{'role': 'user', 'parts': inputs}], 'store': False,
-                  'generationConfig': {'candidateCount': 1, 'maxOutputTokens': 2048,
+                  'generationConfig': {'candidateCount': 1, 'maxOutputTokens': 4096,
                                        'responseMimeType': 'application/json', 'responseJsonSchema': schema}},
             timeout=(5, settings.GEMINI_TIMEOUT_SECONDS),
             allow_redirects=False,
@@ -78,6 +85,7 @@ def analyze_images(images, crop, answers):
         payload = response.json()
         candidate = payload['candidates'][0]
         if candidate.get('finishReason') != 'STOP':
+            logger.warning('Assessment response did not finish: crop_id=%s photo_count=%s finish=%s', crop.pk, len(images), candidate.get('finishReason'))
             raise ValueError('Incomplete or blocked response')
         text = ''.join(part.get('text', '') for part in candidate['content']['parts'] if not part.get('thought'))
         result = json.loads(text)
@@ -99,12 +107,17 @@ def analyze_images(images, crop, answers):
             raise ValueError('Disease outside selected crop catalog')
     except requests.Timeout:
         raise AnalysisUnavailable('Image analysis timed out. Your photos are still selected; please retry.', code='provider_timeout') from None
-    except (requests.RequestException, KeyError, IndexError, ValueError, TypeError, AttributeError):
+    except (requests.RequestException, KeyError, IndexError, ValueError, TypeError, AttributeError) as exc:
         # Do not log provider response bodies, uploaded photos, or credentials.
+        logger.warning('Assessment response rejected: crop_id=%s photo_count=%s error_type=%s', crop.pk, len(images), type(exc).__name__)
         raise AnalysisUnavailable() from None
     if not result['contains_plant']:
         raise ValidationError({'images': 'Please upload clear photos of the plant you want to assess.'})
     category = result['category']
+    # A catalog association must never turn healthy/unknown/non-disease findings
+    # into a disease diagnosis or replace the photo-specific explanation.
+    if category != 'disease':
+        disease = None
     condition_name = result['condition_name'].strip() or ('Healthy / no visible disease' if category == 'healthy' else 'Unknown condition')
     usable_identification = category not in ('unknown',) and confidence >= settings.CONFIDENCE_THRESHOLD and not result['inconsistent']
     assessment = {

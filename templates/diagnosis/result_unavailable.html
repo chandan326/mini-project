@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}Report unavailable | AgriHealth AI{% endblock %}
+{% block content %}
+<div class="container py-5"><div class="agri-card max-width-700 mx-auto">
+  <h2 class="text-success">This report is unavailable in this session</h2>
+  <p>Open the report in the browser or account that created it. If it is still unavailable, the saved report may have expired or could not be retrieved.</p>
+  <p class="text-muted">You can start a new assessment using your original plant photos.</p>
+  <a class="btn btn-agri-primary" href="{% url 'wizard' %}">Start a new assessment</a>
+</div></div>
+{% endblock %}

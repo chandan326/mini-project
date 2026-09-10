@@ -115,15 +115,15 @@
 <!-- Supported Crops Section -->
 <section class="py-5 bg-light" data-crop-search-root>
   <div class="container">
-    <div class="d-flex flex-wrap gap-3 justify-content-between align-items-end mb-4">
-      <div>
+    <div class="crop-section-header mb-4">
+      <div class="crop-section-heading">
         <h2 class="fw-bold text-success mb-1">{{ UI.SUPPORTED_CROPS }}</h2>
         <p class="text-muted mb-0">{% if UI.is_hi %}30 प्रमुख भारतीय फसलों के लिए AI-सहायता प्राप्त फोटो मूल्यांकन।{% else %}AI-assisted photo assessments for 30 major Indian crops.{% endif %}</p>
       </div>
-      <a href="{% url 'crop_list' %}" class="btn btn-agri-outline btn-sm">{% if UI.is_hi %}सभी फसलें देखें &rarr;{% else %}View All Crops &rarr;{% endif %}</a>
+      {% include 'crops/search_controls.html' with compact=True %}
+      <a href="{% url 'crop_list' %}" class="btn btn-agri-outline btn-sm crop-section-link">{% if UI.is_hi %}सभी फसलें देखें &rarr;{% else %}View All Crops &rarr;{% endif %}</a>
     </div>
 
-    {% include 'crops/search_controls.html' %}
     <p data-crop-empty class="alert alert-info" hidden>{% if UI.is_hi %}कोई फसल नहीं मिली। दूसरा नाम खोजें।{% else %}No crops found. Try another name or clear your search.{% endif %}</p>
     <div class="row g-3" id="searchableCrops">
       {% for crop in crops %}

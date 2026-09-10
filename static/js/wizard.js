@@ -51,12 +51,14 @@ document.addEventListener('DOMContentLoaded', () => {
     updateControls();
   }
   async function optimize(file) {
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) throw new Error('Choose JPG, PNG or WebP. Convert HEIC photos to JPG first.');
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) && !(!file.type && /\.(jpe?g|png|webp)$/i.test(file.name))) throw new Error('Choose JPG, PNG or WebP. Convert HEIC photos to JPG first.');
     if (file.size > 20 * 1024 * 1024) throw new Error('Each original photo must be below 20 MB.');
     let source, sourceUrl;
     try {
-      if ('createImageBitmap' in window) source = await createImageBitmap(file, {imageOrientation: 'from-image'});
-      else {
+      if ('createImageBitmap' in window) {
+        try { source = await createImageBitmap(file, {imageOrientation: 'from-image'}); } catch (_) { /* Try the browser image decoder below. */ }
+      }
+      if (!source) {
         sourceUrl = URL.createObjectURL(file); source = new Image(); source.src = sourceUrl; await source.decode();
       }
       const width = source.width || source.naturalWidth, height = source.height || source.naturalHeight;

@@ -56,6 +56,8 @@ class Diagnosis(models.Model):
 
     @property
     def assessed_condition(self):
+        if self.ai_assessment.get('condition_name'):
+            return self.ai_assessment['condition_name']
         if self.predicted_disease:
             return self.predicted_disease.name
         return self.ai_assessment.get('condition_name') or 'Uncertain / Unconfirmed Symptom'
