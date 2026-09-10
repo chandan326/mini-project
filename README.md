@@ -4,8 +4,10 @@ Django 5.2 plant assessment app in `chandan326/mini-project`, deployed as Vercel
 
 ## Photo workflow
 
+The neural narration build runs on Linux with `libseccomp`: `offline_voice_guard.py` denies network system calls before the speech runtime loads, and runtime telemetry is disabled. Install dependencies and download the models before running the offline build.
+
 - Home and the crop directory have instant English/Hindi/scientific-name search with a clear button and result count.
-- “How It Works” opens a keyboard-accessible video dialog with play/pause, replay, ±10s, speed, native volume/fullscreen, close and download controls. Closing stops playback. The 60-second 720p MP4 is bundled locally, uses female synthetic English narration and burned-in captions, and loads only when opened. No InVideo or paid API is used for the final video. Rebuild offline using `python scripts/build_tutorial.py` with Pillow and FFmpeg (Flite support).
+- “How It Works” opens a keyboard-accessible video dialog with play/pause, replay, ±10s, speed, native volume/fullscreen, close and download controls. Closing stops playback. The 60-second 720p MP4 is bundled locally, uses female neural English narration and burned-in captions, and loads only when opened. No InVideo or paid API is used for the final video. To rebuild the base visuals, use `python scripts/build_tutorial.py` with Pillow and FFmpeg (Flite support), then replace the draft voice with `python scripts/replace_tutorial_voice.py --model-dir /path/to/models`. The voice build uses `kokoro-onnx==0.6.1`, `soundfile`, Kokoro v1.0 and the `af_heart` voice, with natural pauses and no audio time stretching. Models are build-time downloads from [kokoro-onnx](https://github.com/thewh1teagle/kokoro-onnx) (model: Apache-2.0; runtime: MIT); neither models nor voice dependencies are deployed with the app. The voice update copies the video stream without re-encoding its visuals.
 
 - Select a crop, add **1-5 photos** from the gallery, drag and drop, or use the camera.
 - The scanner includes 30 widely grown Indian field and horticultural crops, with English and Hindi names. Re-running `python manage.py seed_data` safely adds or updates the full list.
