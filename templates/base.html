@@ -132,6 +132,9 @@
         </div>
       </div>
     </div>
+      {% if request.resolver_match.url_name == 'home' %}
+        {% include 'related_work.html' %}
+      {% endif %}
   </footer>
 
   {% include 'tutorial_modal.html' %}
